@@ -33,6 +33,21 @@ public class TemplateMedia {
 
     protected TemplateMedia() {}
 
+    public TemplateMedia(
+            Long templateId,
+            ContentType mediaType,
+            String storageKey,
+            String previewKey,
+            String thumbnailKey,
+            int sortOrder) {
+        this.templateId = templateId;
+        this.mediaType = mediaType;
+        this.storageKey = storageKey;
+        this.previewKey = previewKey;
+        this.thumbnailKey = thumbnailKey;
+        this.sortOrder = sortOrder;
+    }
+
     public Long getId() {
         return id;
     }

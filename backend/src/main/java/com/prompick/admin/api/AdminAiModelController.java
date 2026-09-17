@@ -1,15 +1,17 @@
 package com.prompick.admin.api;
 
 import com.prompick.admin.api.dto.AiModelResponse;
+import com.prompick.ai.domain.AiModel;
 import com.prompick.ai.domain.AiModelRepository;
 import com.prompick.ai.domain.Capability;
+import com.prompick.common.error.ApiException;
+import com.prompick.common.error.ErrorCode;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.PositiveOrZero;
 import java.util.List;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * AI 모델 목록. 관리자가 파이프라인 단계를 만들 때 고를 후보를 내려준다.
@@ -43,4 +45,21 @@ public class AdminAiModelController {
 
         return found.stream().map(AiModelResponse::from).toList();
     }
+
+    @PatchMapping("/{id}")
+    @Operation(
+            summary = "모델 사용 설정",
+            description = "약관을 확인하고 API 키를 넣은 뒤 켠다. 꺼진 모델은 파이프라인에서 고를 수 없다")
+    @Transactional
+    public AiModelResponse configure(@PathVariable Long id, @RequestBody ConfigureRequest request) {
+        AiModel model = models.findById(id).orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND));
+        model.configure(
+                request.active(),
+                request.unitCostKrw() == null ? model.getUnitCostKrw() : request.unitCostKrw(),
+                request.memo() == null ? model.getMemo() : request.memo());
+        return AiModelResponse.from(model);
+    }
+
+    public record ConfigureRequest(
+            boolean active, @PositiveOrZero Integer unitCostKrw, String memo) {}
 }

@@ -52,6 +52,17 @@ public class AiModel {
 
     protected AiModel() {}
 
+    /**
+     * 사용 여부와 원가를 바꾼다.
+     *
+     * <p>외부 제공사 약관을 확인하고 API 키를 넣은 뒤에 켠다. 켜지 않은 모델은 파이프라인에서 고를 수 없다.
+     */
+    public void configure(boolean active, int unitCostKrw, String memo) {
+        this.active = active;
+        this.unitCostKrw = unitCostKrw;
+        this.memo = memo;
+    }
+
     public Long getId() {
         return id;
     }

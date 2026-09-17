@@ -118,6 +118,66 @@ public class Template {
 
     protected Template() {}
 
+    public Template(String slug, String title, ContentType contentType, Category category) {
+        this.slug = slug;
+        this.title = title;
+        this.contentType = contentType;
+        this.category = category;
+    }
+
+    /**
+     * 관리자 화면에서 넘어온 값으로 갱신한다.
+     *
+     * <p>요금 규칙은 DB 제약으로도 막혀 있지만, 사용자에게 읽을 수 있는 메시지를 주려고
+     * 여기서 먼저 정리한다. 무료·비공개인데 가격이 남아 있으면 0으로 맞춘다.
+     */
+    public void update(
+            String title,
+            String description,
+            ContentType contentType,
+            Category category,
+            PromptAccess promptAccess,
+            int promptCost,
+            GenerateAccess generateAccess,
+            int generateCost,
+            String ratio,
+            Integer durationSeconds,
+            String resolution,
+            int estimatedSeconds,
+            String requiredPhotoSummary,
+            Map<String, Object> uploadGuide,
+            Set<String> tags,
+            boolean pinned) {
+        this.title = title;
+        this.description = description;
+        this.contentType = contentType;
+        this.category = category;
+        this.promptAccess = promptAccess;
+        this.promptCost = promptAccess == PromptAccess.PAID ? promptCost : 0;
+        this.generateAccess = generateAccess;
+        this.generateCost = generateAccess == GenerateAccess.PAID ? generateCost : 0;
+        this.ratio = ratio;
+        this.durationSeconds = durationSeconds;
+        this.resolution = resolution;
+        this.estimatedSeconds = estimatedSeconds;
+        this.requiredPhotoSummary = requiredPhotoSummary;
+        this.uploadGuide = uploadGuide == null ? Map.of() : uploadGuide;
+        this.tags = tags == null ? new LinkedHashSet<>() : new LinkedHashSet<>(tags);
+        this.pinned = pinned;
+    }
+
+    /** 게시. 처음 게시하는 순간을 기록해 신규 목록 정렬에 쓴다. */
+    public void publish() {
+        this.status = TemplateStatus.PUBLISHED;
+        if (this.publishedAt == null) {
+            this.publishedAt = Instant.now();
+        }
+    }
+
+    public void unpublish() {
+        this.status = TemplateStatus.HIDDEN;
+    }
+
     /** 목록·상세에 쓸 대표 예시 결과물 */
     public TemplateMedia primaryMedia() {
         return media.isEmpty() ? null : media.get(0);

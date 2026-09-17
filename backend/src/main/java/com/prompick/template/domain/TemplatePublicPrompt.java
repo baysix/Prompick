@@ -34,6 +34,17 @@ public class TemplatePublicPrompt {
 
     protected TemplatePublicPrompt() {}
 
+    public TemplatePublicPrompt(Long templateId) {
+        this.templateId = templateId;
+    }
+
+    public void update(String body, String negativePrompt, String recommendedTool, String usageTip) {
+        this.body = body;
+        this.negativePrompt = negativePrompt;
+        this.recommendedTool = recommendedTool;
+        this.usageTip = usageTip;
+    }
+
     public Long getId() {
         return id;
     }
