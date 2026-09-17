@@ -1,0 +1,19 @@
+# 시크릿은 절대 커밋하지 않는다
+.env
+.env.*
+!.env.example
+!.env.local.example
+
+# 로컬 개발용 파일 저장소
+storage/
+
+# OS
+Thumbs.db
+.DS_Store
+node_modules/
+.next/
+out/
+build/
+.gradle/
+playwright-report/
+test-results/
