@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtValidators;
+import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 
 /**
@@ -47,7 +48,14 @@ public class SupabaseAuthConfig {
                     .build();
             log.info("Supabase Auth: 대칭키(HS256)로 토큰을 검증합니다.");
         } else {
-            decoder = NimbusJwtDecoder.withJwkSetUri(supabase.jwksUri()).build();
+            // Supabase는 ES256(타원곡선)으로 서명한다. NimbusJwtDecoder의 기본값은 RS256뿐이라
+            // 지정하지 않으면 서명이 맞아도 "지원하지 않는 알고리즘"으로 거부된다.
+            decoder = NimbusJwtDecoder.withJwkSetUri(supabase.jwksUri())
+                    .jwsAlgorithms(algorithms -> {
+                        algorithms.add(SignatureAlgorithm.ES256);
+                        algorithms.add(SignatureAlgorithm.RS256);
+                    })
+                    .build();
             log.info("Supabase Auth: JWKS로 토큰을 검증합니다. {}", supabase.jwksUri());
         }
 

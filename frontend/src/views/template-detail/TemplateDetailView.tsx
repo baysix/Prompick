@@ -2,6 +2,7 @@ import Link from "next/link";
 import { isPlayableVideo } from "@/entities/template/lib/media";
 import { PromptBlock } from "@/entities/template/ui/PromptBlock";
 import { GenerateBadge } from "@/entities/template/ui/AccessBadge";
+import { GenerateButton } from "@/entities/template/ui/TemplateActions";
 import type { TemplateDetail } from "@/entities/template/model/types";
 
 /**
@@ -112,6 +113,7 @@ export function TemplateDetailView({ template }: { template: TemplateDetail }) {
             </dl>
 
             <PromptBlock
+              slug={template.slug}
               access={template.promptAccess}
               cost={template.promptCost}
               prompt={template.prompt}
@@ -164,14 +166,11 @@ export function TemplateDetailView({ template }: { template: TemplateDetail }) {
           <div className="min-w-0 flex-1">
             <GenerateBadge access={template.generateAccess} cost={template.generateCost} />
           </div>
-          <Link
-            href={`/t/${template.slug}/create`}
-            className="shrink-0 rounded-sm bg-ink px-5 py-2.5 text-[14px] font-medium text-ground"
-          >
-            {template.generateAccess === "FREE"
-              ? "무료로 만들기"
-              : `🪙 ${template.generateCost.toLocaleString()}으로 만들기`}
-          </Link>
+          <GenerateButton
+            slug={template.slug}
+            access={template.generateAccess}
+            cost={template.generateCost}
+          />
         </div>
       </div>
     </main>

@@ -51,11 +51,16 @@ public class SecurityConfig {
                         // 웹훅은 서명으로 검증한다. (포트원, AI 제공사)
                         .requestMatchers("/api/v1/webhooks/**")
                         .permitAll()
-                        // 관리자 API는 파이프라인 원문을 다룬다. 3단계에서 ADMIN 권한 검사로 바꾼다.
+                        // 가입은 로그인 전에 하는 일이다.
+                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/signup")
+                        .permitAll()
+                        // 관리자 API는 파이프라인 원문을 다룬다. 관리자 로그인을 붙이면 ADMIN 검사로 바꾼다.
                         .requestMatchers("/api/v1/admin/**")
                         .permitAll()
+                        // 그 밖의 API는 로그인이 필요하다. 실제 이용(제작, 프롬프트 열람, 마이페이지)이
+                        // 여기에 해당한다.
                         .anyRequest()
-                        .permitAll())
+                        .authenticated())
                 // Supabase가 발급한 액세스 토큰을 Bearer로 받아 검증한다.
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> {}))
                 .build();

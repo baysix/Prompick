@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { SERVICE } from "@/shared/config/env";
+import { UserMenu } from "./UserMenu";
 
 /**
  * 상단바.
@@ -32,12 +33,7 @@ export function SiteHeader() {
           >
             검색
           </Link>
-          <Link
-            href="/login"
-            className="rounded-sm bg-ink px-3 py-1.5 text-[13px] font-medium text-ground"
-          >
-            로그인
-          </Link>
+          <UserMenu />
         </div>
       </div>
     </header>

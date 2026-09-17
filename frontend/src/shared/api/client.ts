@@ -37,15 +37,33 @@ type RequestOptions = Omit<RequestInit, "body"> & {
   idempotencyKey?: string;
 };
 
+/**
+ * 액세스 토큰을 가져오는 함수.
+ *
+ * 인증 구현(Supabase)을 이 파일이 직접 알지 않게 하려고 주입받는다. 나중에 인증 방식을 바꿔도
+ * 이 파일은 그대로 둘 수 있다.
+ */
+type TokenProvider = () => Promise<string | null>;
+
+let getToken: TokenProvider = async () => null;
+
+export function setTokenProvider(provider: TokenProvider) {
+  getToken = provider;
+}
+
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { body, idempotencyKey, headers, ...rest } = options;
   const baseUrl = typeof window === "undefined" ? env.serverApiBaseUrl : env.apiBaseUrl;
+
+  // 서버 컴포넌트에서는 로그인 상태가 없다. 공개 조회만 하므로 토큰 없이 보낸다.
+  const token = typeof window === "undefined" ? null : await getToken();
 
   const res = await fetch(`${baseUrl}${path}`, {
     ...rest,
     headers: {
       ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
       ...(idempotencyKey ? { "Idempotency-Key": idempotencyKey } : {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...headers,
     },
     body: body !== undefined ? JSON.stringify(body) : undefined,

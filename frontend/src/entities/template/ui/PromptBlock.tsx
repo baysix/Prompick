@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { PromptAccess, PublicPrompt } from "../model/types";
 import { LockIcon } from "./AccessBadge";
+import { ViewPromptButton } from "./TemplateActions";
 
 /**
  * 프롬프트 영역.
@@ -11,10 +12,12 @@ import { LockIcon } from "./AccessBadge";
  * 색을 하나 더 쓰지 않고 형태로 구분한다 — 색이 늘면 요금 배지의 의미가 흐려진다.
  */
 export function PromptBlock({
+  slug,
   access,
   cost,
   prompt,
 }: {
+  slug: string;
   access: PromptAccess;
   cost: number;
   prompt: PublicPrompt | null;
@@ -23,7 +26,7 @@ export function PromptBlock({
     return <MaskedPrompt />;
   }
   if (!prompt) {
-    return <LockedPrompt cost={cost} />;
+    return <LockedPrompt slug={slug} access={access} cost={cost} />;
   }
   return <OpenPrompt prompt={prompt} />;
 }
@@ -84,8 +87,16 @@ function OpenPrompt({ prompt }: { prompt: PublicPrompt }) {
   );
 }
 
-/** 유료 프롬프트. 아직 열람권이 없는 상태 */
-function LockedPrompt({ cost }: { cost: number }) {
+/** 아직 볼 수 없는 상태. 로그인이 필요하거나, 유료라 구매가 필요하다 */
+function LockedPrompt({
+  slug,
+  access,
+  cost,
+}: {
+  slug: string;
+  access: PromptAccess;
+  cost: number;
+}) {
   return (
     <section className="border border-line bg-ground-raised">
       <div className="border-b border-line px-3 py-2">
@@ -94,13 +105,10 @@ function LockedPrompt({ cost }: { cost: number }) {
       <div className="relative px-3 py-3">
         <MaskLines />
         <div className="relative mt-3 flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            className="rounded-sm bg-paid px-3 py-1.5 text-[13px] font-medium text-white"
-          >
-            <span aria-hidden>🪙</span> {cost.toLocaleString()}으로 열어보기
-          </button>
-          <span className="text-[12px] text-ink-faint">한 번 열면 계속 볼 수 있어요</span>
+          <ViewPromptButton slug={slug} cost={cost} />
+          <span className="text-[12px] text-ink-faint">
+            {access === "FREE" ? "로그인하면 바로 볼 수 있어요" : "한 번 열면 계속 볼 수 있어요"}
+          </span>
         </div>
       </div>
     </section>
