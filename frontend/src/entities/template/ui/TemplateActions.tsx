@@ -39,7 +39,7 @@ export function GenerateButton({
       type="button"
       onClick={click}
       disabled={loading}
-      className="shrink-0 rounded-sm bg-ink px-5 py-2.5 text-[14px] font-medium text-ground disabled:opacity-60"
+      className="shrink-0 rounded-sm bg-accent px-5 py-2.5 text-[14px] font-medium text-accent-ink disabled:opacity-60"
     >
       {label}
     </button>
@@ -54,7 +54,7 @@ export function ViewPromptButton({ slug, cost }: { slug: string; cost: number })
     return (
       <Link
         href={`/login?next=${encodeURIComponent(`/t/${slug}`)}`}
-        className="inline-block rounded-sm bg-ink px-3 py-1.5 text-[13px] font-medium text-ground"
+        className="inline-block rounded-sm bg-accent px-3 py-1.5 text-[13px] font-medium text-accent-ink"
       >
         로그인하고 프롬프트 보기
       </Link>

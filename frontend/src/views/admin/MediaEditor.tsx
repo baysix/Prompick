@@ -83,7 +83,7 @@ export function MediaEditor({ templateId }: { templateId: number }) {
               <button
                 type="button"
                 onClick={() => remove.mutate(m.id)}
-                className="absolute right-1 top-1 rounded-sm bg-ink/75 px-1 py-0.5 text-[10px] text-ground"
+                className="absolute right-1 top-1 rounded-sm bg-ink/75 px-1 py-0.5 text-[10px] text-accent-ink"
               >
                 삭제
               </button>
@@ -101,12 +101,12 @@ export function MediaEditor({ templateId }: { templateId: number }) {
             const file = e.target.files?.[0];
             if (file) void upload(file);
           }}
-          className="text-[13px] text-ink-soft file:mr-2 file:rounded-sm file:border file:border-line file:bg-ground-raised file:px-2.5 file:py-1 file:text-[13px] file:text-ink"
+          className="text-[13px] text-ink-soft file:mr-2 file:rounded-sm file:border file:border-line file:bg-surface file:px-2.5 file:py-1 file:text-[13px] file:text-ink"
         />
         {uploading && <span className="text-[12px] text-ink-faint">올리는 중</span>}
       </div>
 
-      {error && <p className="text-[13px] text-[#b0413e]">{error}</p>}
+      {error && <p className="text-[13px] text-[#ff6b6b]">{error}</p>}
     </section>
   );
 }

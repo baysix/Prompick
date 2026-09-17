@@ -18,7 +18,7 @@ export function UserMenu() {
     return (
       <Link
         href={`/login?next=${encodeURIComponent(pathname)}`}
-        className="rounded-sm bg-ink px-3 py-1.5 text-[13px] font-medium text-ground"
+        className="rounded-full bg-accent px-3.5 py-1.5 text-[13px] font-semibold text-accent-ink"
       >
         로그인
       </Link>
@@ -26,15 +26,24 @@ export function UserMenu() {
   }
 
   return (
-    <div className="flex items-center gap-3">
-      <Link href="/my" className="text-[13px] text-ink-soft hover:text-ink">
-        <span aria-hidden>🪙</span> {me?.creditBalance?.toLocaleString() ?? 0}
+    <div className="flex items-center gap-1.5">
+      <Link
+        href="/my/credits"
+        className="flex items-center gap-1 rounded-full bg-surface px-3 py-2 text-[13px] font-medium text-ink"
+      >
+        <span aria-hidden>🪙</span>
+        {me?.creditBalance?.toLocaleString() ?? 0}
       </Link>
-      <span className="text-[13px] text-ink">{me?.nickname}</span>
+      <Link
+        href="/my/jobs"
+        className="hidden rounded-full px-3 py-2 text-[13px] text-ink-soft hover:bg-surface hover:text-ink sm:block"
+      >
+        {me?.nickname ?? "내 정보"}
+      </Link>
       <button
         type="button"
         onClick={() => void signOut()}
-        className="text-[13px] text-ink-faint hover:text-ink"
+        className="rounded-full px-3 py-2 text-[13px] text-ink-faint hover:bg-surface hover:text-ink"
       >
         로그아웃
       </button>

@@ -1,6 +1,7 @@
 import { templateApi } from "@/entities/template/api/templateApi";
-import { TransformHero } from "@/widgets/hero/TransformHero";
+import { ShowcaseGrid } from "@/widgets/showcase/ShowcaseGrid";
 import { TemplateRow } from "@/widgets/template-row/TemplateRow";
+import { SiteFooter } from "@/widgets/site-footer/SiteFooter";
 import { SiteHeader } from "@/widgets/site-header/SiteHeader";
 import type { HomeData } from "@/entities/template/model/types";
 
@@ -17,11 +18,14 @@ export default async function HomePage() {
     failed = true;
   }
 
+  // 첫 화면 격자에 쓸 결과물. 인기 섹션의 것을 그대로 쓴다.
+  const showcase = home.sections.flatMap((s) => s.items).slice(0, 14);
+
   return (
     <>
       <SiteHeader />
       <main className="flex-1 pb-16">
-        <TransformHero />
+        <ShowcaseGrid items={showcase} />
 
         {failed ? (
           <NoticeBlock
@@ -41,6 +45,7 @@ export default async function HomePage() {
           </div>
         )}
       </main>
+      <SiteFooter />
     </>
   );
 }

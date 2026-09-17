@@ -40,11 +40,11 @@ function SearchBody({ submitted }: { submitted: string }) {
             onChange={(e) => setInput(e.target.value)}
             placeholder="제품 광고, 필름 프로필, 시네마틱…"
             aria-label="템플릿 검색"
-            className="min-w-0 flex-1 border border-line bg-ground-raised px-3 py-2.5 text-[14px] text-ink placeholder:text-ink-faint"
+            className="min-w-0 flex-1 border border-line bg-surface px-3 py-2.5 text-[14px] text-ink placeholder:text-ink-faint"
           />
           <button
             type="submit"
-            className="shrink-0 rounded-sm bg-ink px-4 py-2.5 text-[14px] font-medium text-ground"
+            className="shrink-0 rounded-sm bg-accent px-4 py-2.5 text-[14px] font-medium text-accent-ink"
           >
             검색
           </button>

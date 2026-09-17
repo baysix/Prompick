@@ -130,7 +130,7 @@ export function PipelineEditor({ templateId }: { templateId: number }) {
           type="button"
           onClick={() => save.mutate()}
           disabled={steps.length === 0 || save.isPending}
-          className="rounded-sm bg-ink px-3 py-1.5 text-[13px] font-medium text-ground disabled:opacity-40"
+          className="rounded-sm bg-accent px-3 py-1.5 text-[13px] font-medium text-accent-ink disabled:opacity-40"
         >
           {save.isPending ? "저장 중" : "새 버전으로 저장"}
         </button>
@@ -145,7 +145,7 @@ export function PipelineEditor({ templateId }: { templateId: number }) {
         )}
       </div>
 
-      {error && <p className="text-[13px] text-[#b0413e]">{error}</p>}
+      {error && <p className="text-[13px] text-[#ff6b6b]">{error}</p>}
 
       <div className="space-y-1.5">
         <label className="block text-[12px] text-ink-soft">
@@ -154,7 +154,7 @@ export function PipelineEditor({ templateId }: { templateId: number }) {
         <input
           value={memo || active?.adminMemo || ""}
           onChange={(e) => setMemo(e.target.value)}
-          className="w-full border border-line bg-ground-raised px-2.5 py-1.5 text-[13px]"
+          className="w-full border border-line bg-surface px-2.5 py-1.5 text-[13px]"
         />
       </div>
 
@@ -223,7 +223,7 @@ function StepCard({
     selected && !fitting.some((m) => m.id === selected.id) ? [selected, ...fitting] : fitting;
 
   return (
-    <li className="border border-line bg-ground-raised">
+    <li className="border border-line bg-surface">
       <div className="flex items-center gap-2 border-b border-line px-3 py-2">
         <span className="text-[12px] text-ink-faint">{index + 1}</span>
 
@@ -244,7 +244,7 @@ function StepCard({
           onChange={(e) => onChange({ modelId: e.target.value ? Number(e.target.value) : null })}
           className={cn(
             "border bg-ground px-2 py-1 text-[13px]",
-            step.modelId ? "border-line" : "border-[#b0413e] text-[#b0413e]",
+            step.modelId ? "border-line" : "border-[#ff6b6b] text-[#ff6b6b]",
           )}
         >
           <option value="">어떤 AI를 쓸까요</option>

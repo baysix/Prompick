@@ -55,7 +55,7 @@ export function PublicPromptEditor({ templateId }: { templateId: number }) {
           onChange={(e) => set({ body: e.target.value })}
           rows={4}
           placeholder="A product floating in mid-air against a seamless pastel backdrop..."
-          className="w-full border border-line bg-ground-raised px-2.5 py-2 font-mono text-[12.5px] leading-relaxed"
+          className="w-full border border-line bg-surface px-2.5 py-2 font-mono text-[12.5px] leading-relaxed"
         />
       </div>
 
@@ -65,7 +65,7 @@ export function PublicPromptEditor({ templateId }: { templateId: number }) {
           value={value.negativePrompt ?? ""}
           onChange={(e) => set({ negativePrompt: e.target.value })}
           placeholder="text, watermark, extra objects"
-          className="w-full border border-line bg-ground-raised px-2.5 py-1.5 font-mono text-[12.5px]"
+          className="w-full border border-line bg-surface px-2.5 py-1.5 font-mono text-[12.5px]"
         />
       </div>
 
@@ -76,7 +76,7 @@ export function PublicPromptEditor({ templateId }: { templateId: number }) {
             value={value.recommendedTool ?? ""}
             onChange={(e) => set({ recommendedTool: e.target.value })}
             placeholder="Midjourney v7 / Runway Gen-4"
-            className="w-full border border-line bg-ground-raised px-2.5 py-1.5 text-[13px]"
+            className="w-full border border-line bg-surface px-2.5 py-1.5 text-[13px]"
           />
         </div>
         <div className="space-y-1">
@@ -84,7 +84,7 @@ export function PublicPromptEditor({ templateId }: { templateId: number }) {
           <input
             value={value.usageTip ?? ""}
             onChange={(e) => set({ usageTip: e.target.value })}
-            className="w-full border border-line bg-ground-raised px-2.5 py-1.5 text-[13px]"
+            className="w-full border border-line bg-surface px-2.5 py-1.5 text-[13px]"
           />
         </div>
       </div>

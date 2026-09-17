@@ -12,24 +12,36 @@
 @import "tailwindcss";
 
 /* ---------------------------------------------------------------------------
-   색 — 라이트박스
+   색
 
-   결과물이 주인공이므로 UI는 색을 갖지 않는다. 색을 갖는 것은 요금 배지뿐이다.
-   밝은 회백 바탕을 쓰는 이유: 목록에 알록달록한 AI 결과물이 깔리는데, 어두운 바탕에서는
-   서로 비슷해 보이고 여느 영상 플랫폼과 구분되지 않는다.
+   흰 바탕 위에 결과물을 둥근 타일로 얹는다. 어두운 바탕은 영상 하나하나는 돋보이지만
+   목록에서 서로 뭉개지고, 무엇보다 이 서비스는 "도구"에 가깝다 — 매일 열어 쓰는 화면은
+   밝은 편이 지치지 않는다.
+
+   색을 갖는 것은 세 가지뿐이다. 주요 행동(파랑), 무료(초록), 유료(금색).
+   나머지는 흰색과 회색으로만 만든다. 그래야 타일 속 영상 색이 화면의 주인공이 된다.
 --------------------------------------------------------------------------- */
 @theme {
-  --color-ground: #e9eae4;
-  --color-ground-raised: #f3f4ef;
-  --color-ink: #1b2b26;
-  --color-ink-soft: #5c6b66;
-  --color-ink-faint: #8d9994;
-  --color-line: #d3d5cc;
+  --color-ground: #ffffff;
+  --color-surface: #f6f7f9;
+  --color-surface-2: #eef0f4;
+  --color-line: #e5e7ec;
+  --color-line-soft: #f0f1f4;
 
-  --color-free: #2f6b2b;
-  --color-free-soft: #e2ecdf;
-  --color-paid: #a8792b;
-  --color-paid-soft: #f2e9d8;
+  --color-ink: #16181d;
+  --color-ink-soft: #5a616e;
+  --color-ink-faint: #9aa1ae;
+
+  /* 무료는 초록, 유료는 금색 */
+  --color-free: #15803d;
+  --color-free-soft: #e8f5ec;
+  --color-paid: #9a6a12;
+  --color-paid-soft: #fbf1dd;
+
+  /* 주요 행동 하나에만 쓰는 색 */
+  --color-accent: #2b62ff;
+  --color-accent-soft: #eaefff;
+  --color-accent-ink: #ffffff;
 
   --font-sans: "Wanted Sans Variable", "Wanted Sans", system-ui, -apple-system, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, monospace;
@@ -38,6 +50,7 @@
 html {
   background: var(--color-ground);
   color: var(--color-ink);
+  color-scheme: light;
   -webkit-text-size-adjust: 100%;
 }
 
@@ -49,7 +62,7 @@ body {
 
 /* 키보드 사용자가 지금 어디에 있는지 항상 보이게 한다 */
 :focus-visible {
-  outline: 2px solid var(--color-ink);
+  outline: 2px solid var(--color-accent);
   outline-offset: 2px;
   border-radius: 2px;
 }

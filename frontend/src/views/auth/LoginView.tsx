@@ -98,7 +98,7 @@ export function LoginView() {
         />
 
         {error && (
-          <p className="border-l-2 border-[#b0413e] pl-2.5 text-[13px] leading-relaxed text-[#b0413e]">
+          <p className="border-l-2 border-[#ff6b6b] pl-2.5 text-[13px] leading-relaxed text-[#ff6b6b]">
             {error}
           </p>
         )}
@@ -106,7 +106,7 @@ export function LoginView() {
         <button
           type="submit"
           disabled={busy}
-          className="w-full rounded-sm bg-ink py-2.5 text-[14px] font-medium text-ground disabled:opacity-40"
+          className="w-full rounded-sm bg-accent py-2.5 text-[14px] font-medium text-accent-ink disabled:opacity-40"
         >
           {busy ? "잠시만요" : mode === "signin" ? "로그인" : "가입하고 시작하기"}
         </button>
@@ -161,7 +161,7 @@ function Input({
         autoComplete={autoComplete}
         required={required}
         className={cn(
-          "w-full border border-line bg-ground-raised px-3 py-2.5 text-[14px] text-ink",
+          "w-full border border-line bg-surface px-3 py-2.5 text-[14px] text-ink",
           "placeholder:text-ink-faint",
         )}
       />

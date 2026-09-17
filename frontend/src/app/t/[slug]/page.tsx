@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { templateApi } from "@/entities/template/api/templateApi";
 import { TemplateDetailView } from "@/views/template-detail/TemplateDetailView";
+import { SiteFooter } from "@/widgets/site-footer/SiteFooter";
 import { SiteHeader } from "@/widgets/site-header/SiteHeader";
 import type { TemplateDetail } from "@/entities/template/model/types";
 
@@ -55,6 +56,7 @@ export default async function TemplatePage({ params }: { params: Promise<{ slug:
     <>
       <SiteHeader />
       <TemplateDetailView template={template} />
+      <SiteFooter />
     </>
   );
 }

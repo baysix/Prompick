@@ -45,13 +45,13 @@ function OpenPrompt({ prompt }: { prompt: PublicPrompt }) {
   }
 
   return (
-    <section className="border border-line bg-ground-raised">
+    <section className="border border-line bg-surface">
       <div className="flex items-center justify-between border-b border-line px-3 py-2">
         <h2 className="text-[13px] font-medium text-ink">프롬프트</h2>
         <button
           type="button"
           onClick={copy}
-          className="rounded-sm bg-ink px-2.5 py-1 text-[12px] font-medium text-ground"
+          className="rounded-sm bg-accent px-2.5 py-1 text-[12px] font-medium text-accent-ink"
         >
           {copied ? "복사했어요" : "복사하기"}
         </button>
@@ -98,7 +98,7 @@ function LockedPrompt({
   cost: number;
 }) {
   return (
-    <section className="border border-line bg-ground-raised">
+    <section className="border border-line bg-surface">
       <div className="border-b border-line px-3 py-2">
         <h2 className="text-[13px] font-medium text-ink">프롬프트</h2>
       </div>
@@ -118,7 +118,7 @@ function LockedPrompt({
 /** 비공개 프롬프트. 여기서만 만들 수 있는 템플릿 */
 function MaskedPrompt() {
   return (
-    <section className="border border-line bg-ground-raised">
+    <section className="border border-line bg-surface">
       <div className="flex items-center gap-1.5 border-b border-line px-3 py-2 text-ink-faint">
         <LockIcon />
         <h2 className="text-[13px] font-medium">프롬프트를 제공하지 않아요</h2>

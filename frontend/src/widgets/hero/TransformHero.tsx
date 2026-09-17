@@ -27,13 +27,13 @@ export function TransformHero() {
           <div className="flex flex-wrap gap-2 pt-1">
             <Link
               href="/explore"
-              className="rounded-sm bg-ink px-4 py-2.5 text-[14px] font-medium text-ground"
+              className="rounded-sm bg-accent px-4 py-2.5 text-[14px] font-medium text-accent-ink"
             >
               뭐가 있는지 둘러보기
             </Link>
             <Link
               href="/explore?promptOnly=true"
-              className="rounded-sm border border-ink/25 px-4 py-2.5 text-[14px] font-medium text-ink"
+              className="rounded-sm border border-line px-4 py-2.5 text-[14px] font-medium text-ink"
             >
               프롬프트만 보기
             </Link>

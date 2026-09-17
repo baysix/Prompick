@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { ExploreView } from "@/views/explore/ExploreView";
+import { SiteFooter } from "@/widgets/site-footer/SiteFooter";
 import { SiteHeader } from "@/widgets/site-header/SiteHeader";
 
 export const metadata: Metadata = {
@@ -15,6 +16,7 @@ export default function ExplorePage() {
       <Suspense fallback={<div className="flex-1" />}>
         <ExploreView />
       </Suspense>
+      <SiteFooter />
     </>
   );
 }

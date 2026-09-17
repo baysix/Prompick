@@ -63,7 +63,7 @@ export function TemplateFrame({
       className={cn("group block", className)}
       aria-label={template.title}
     >
-      <div className="relative aspect-[9/16] overflow-hidden bg-ink/5">
+      <div className="relative aspect-[9/16] overflow-hidden rounded-lg bg-surface">
         {isVideo ? (
           <video
             ref={videoRef}
@@ -89,14 +89,14 @@ export function TemplateFrame({
 
         {/* 세로가 아닌 결과물은 비율을 알려준다. 잘려 보이는 게 아니라는 신호다 */}
         {template.ratio !== "9:16" && (
-          <span className="absolute right-2 top-2 rounded-sm bg-ink/60 px-1 py-0.5 text-[10px] text-ground">
+          <span className="absolute right-2 top-2 rounded-sm bg-black/60 px-1 py-0.5 text-[10px] text-ink backdrop-blur">
             {template.ratio}
           </span>
         )}
 
         {/* 재생 중이 아닌 영상에만 표시해, 지금 멈춰 있다는 걸 알린다 */}
         {isVideo && !visible && (
-          <span className="absolute bottom-2 left-2 rounded-full bg-ink/70 px-1.5 py-0.5 text-[10px] text-ground">
+          <span className="absolute bottom-2 left-2 rounded-full bg-black/60 px-1.5 py-0.5 text-[10px] text-ink backdrop-blur">
             영상
           </span>
         )}
@@ -120,7 +120,7 @@ export function TemplateFrame({
 
 function EmptyFrame() {
   return (
-    <div className="flex h-full w-full items-center justify-center bg-ground-raised">
+    <div className="flex h-full w-full items-center justify-center bg-surface-2">
       <span className="text-[11px] text-ink-faint">예시 준비 중</span>
     </div>
   );

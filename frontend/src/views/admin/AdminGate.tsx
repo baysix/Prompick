@@ -24,7 +24,7 @@ export function AdminGate({ children }: { children: ReactNode }) {
       <Message title="관리자 로그인이 필요해요">
         <Link
           href={`/login?next=${encodeURIComponent(pathname)}`}
-          className="inline-block rounded-sm bg-ink px-3 py-1.5 text-[13px] font-medium text-ground"
+          className="inline-block rounded-sm bg-accent px-3 py-1.5 text-[13px] font-medium text-accent-ink"
         >
           로그인
         </Link>

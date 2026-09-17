@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { adminApi, adminKeys } from "@/entities/admin/api/adminApi";
 import type { AiModel, Capability } from "@/entities/admin/model/types";
 import { cn } from "@/shared/lib/cn";
+import { Card } from "@/widgets/admin-shell/Card";
 
 const CAPABILITY_LABEL: Record<Capability, string> = {
   TEXT: "글 다루기",
@@ -39,20 +40,18 @@ export function AiModelList() {
   }, {});
 
   return (
-    <main className="mx-auto max-w-4xl flex-1 px-4 py-6">
-      <h1 className="text-[20px] font-semibold text-ink">AI 모델</h1>
-      <p className="mt-1 text-[13px] text-ink-soft">
-        켜둔 모델만 제작 방법에서 고를 수 있어요. 사용자에게는 어떤 AI를 쓰는지 보이지 않아요.
-      </p>
-
+    <div className="space-y-4">
       {isPending ? (
         <p className="py-16 text-[13px] text-ink-faint">불러오는 중</p>
       ) : (
-        <div className="mt-6 space-y-7">
+        <div className="space-y-4">
           {Object.entries(grouped).map(([provider, models]) => (
-            <section key={provider}>
-              <h2 className="text-[13px] font-medium text-ink-soft">{provider}</h2>
-              <ul className="mt-2 divide-y divide-line border-y border-line">
+            <Card
+              key={provider}
+              title={provider}
+              description="켜둔 모델만 제작 방법에서 고를 수 있어요"
+            >
+              <ul className="divide-y divide-line">
                 {models.map((m) => (
                   <li key={m.id} className="flex flex-wrap items-center gap-3 py-2.5">
                     <span className="text-[14px] text-ink">{m.displayName}</span>
@@ -79,7 +78,7 @@ export function AiModelList() {
                 ))}
               </ul>
               {models.some((m) => m.memo) && (
-                <ul className="mt-1.5 space-y-0.5">
+                <ul className="mt-3 space-y-0.5 border-t border-line pt-3">
                   {models
                     .filter((m) => m.memo)
                     .map((m) => (
@@ -89,10 +88,10 @@ export function AiModelList() {
                     ))}
                 </ul>
               )}
-            </section>
+            </Card>
           ))}
         </div>
       )}
-    </main>
+    </div>
   );
 }

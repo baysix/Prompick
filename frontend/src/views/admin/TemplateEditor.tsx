@@ -74,17 +74,17 @@ export function TemplateEditor({ templateId }: { templateId: number | null }) {
   const { promptAccess, generateAccess } = value;
 
   return (
-    <main className="mx-auto max-w-3xl flex-1 space-y-8 px-4 py-6">
+    <div className="mx-auto max-w-3xl space-y-8">
       <header className="flex items-center justify-between gap-3">
-        <h1 className="text-[20px] font-semibold text-ink">
+        <h2 className="text-[18px] font-semibold text-ink">
           {isNew ? "새 템플릿" : existing?.title}
-        </h1>
+        </h2>
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={() => save.mutate()}
             disabled={save.isPending}
-            className="rounded-sm bg-ink px-3 py-1.5 text-[13px] font-medium text-ground disabled:opacity-40"
+            className="rounded-full bg-accent px-3.5 py-1.5 text-[13px] font-semibold text-accent-ink disabled:opacity-40"
           >
             {save.isPending ? "저장 중" : "저장"}
           </button>
@@ -92,7 +92,7 @@ export function TemplateEditor({ templateId }: { templateId: number | null }) {
             <button
               type="button"
               onClick={() => publish.mutate()}
-              className="rounded-sm border border-line px-3 py-1.5 text-[13px] text-ink"
+              className="rounded-full border border-line px-3.5 py-1.5 text-[13px] text-ink"
             >
               {existing?.status === "PUBLISHED" ? "내리기" : "게시하기"}
             </button>
@@ -101,7 +101,7 @@ export function TemplateEditor({ templateId }: { templateId: number | null }) {
       </header>
 
       {error && (
-        <p className="border-l-2 border-[#b0413e] pl-3 text-[13px] text-[#b0413e]">{error}</p>
+        <p className="border-l-2 border-[#ff6b6b] pl-3 text-[13px] text-[#ff6b6b]">{error}</p>
       )}
 
       <ExposureWarning value={value} />
@@ -274,11 +274,11 @@ export function TemplateEditor({ templateId }: { templateId: number | null }) {
           먼저 저장하면 프롬프트 원문과 제작 방법을 등록할 수 있어요.
         </p>
       )}
-    </main>
+    </div>
   );
 }
 
-const inputClass = "w-full border border-line bg-ground-raised px-2.5 py-1.5 text-[13px] text-ink";
+const inputClass = "w-full border border-line bg-surface px-2.5 py-1.5 text-[13px] text-ink";
 
 function Field({
   label,

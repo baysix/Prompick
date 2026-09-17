@@ -25,7 +25,7 @@ export function TemplateDetailView({ template }: { template: TemplateDetail }) {
               스크롤해야 한다. 높이를 제한해 결과물과 정보가 함께 들어오게 한다.
             */}
             <div
-              className="mx-auto max-h-[52vh] overflow-hidden bg-ink/5 md:max-h-none"
+              className="mx-auto max-h-[52vh] overflow-hidden bg-surface md:max-h-none"
               style={{ aspectRatio: template.output.ratio.replace(":", " / ") }}
             >
               {isPlayableVideo(primary?.url) ? (
@@ -52,7 +52,7 @@ export function TemplateDetailView({ template }: { template: TemplateDetail }) {
             {template.media.length > 1 && (
               <div className="scroll-row mt-2 flex gap-2 overflow-x-auto">
                 {template.media.slice(1).map((m, i) => (
-                  <div key={i} className="h-16 w-12 shrink-0 overflow-hidden bg-ink/5">
+                  <div key={i} className="h-16 w-12 shrink-0 overflow-hidden bg-surface">
                     {m.thumbnailUrl && (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={m.thumbnailUrl} alt="" className="h-full w-full object-contain" />
@@ -161,7 +161,7 @@ export function TemplateDetailView({ template }: { template: TemplateDetail }) {
       </div>
 
       {/* 하단 고정 액션 */}
-      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-ground/95 backdrop-blur">
+      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-ground/90 backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-3">
           <div className="min-w-0 flex-1">
             <GenerateBadge access={template.generateAccess} cost={template.generateCost} />

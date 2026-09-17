@@ -1,6 +1,6 @@
-import Link from "next/link";
 import type { Metadata } from "next";
 import { AdminGate } from "@/views/admin/AdminGate";
+import { AdminSidebar } from "@/widgets/admin-shell/AdminSidebar";
 
 export const metadata: Metadata = {
   title: "관리자",
@@ -10,26 +10,11 @@ export const metadata: Metadata = {
 
 export default function AdminLayout({ children }: LayoutProps<"/admin">) {
   return (
-    <>
-      <header className="border-b border-line bg-ground-raised">
-        <div className="mx-auto flex h-12 max-w-5xl items-center gap-4 px-4">
-          <Link href="/admin/templates" className="text-[14px] font-semibold text-ink">
-            프롬픽 관리자
-          </Link>
-          <nav className="flex items-center gap-3 text-[13px] text-ink-soft">
-            <Link href="/admin/templates" className="hover:text-ink">
-              템플릿
-            </Link>
-            <Link href="/admin/ai-models" className="hover:text-ink">
-              AI 모델
-            </Link>
-          </nav>
-          <Link href="/" className="ml-auto text-[13px] text-ink-soft hover:text-ink">
-            서비스 화면으로
-          </Link>
-        </div>
-      </header>
-      <AdminGate>{children}</AdminGate>
-    </>
+    <div className="flex min-h-screen">
+      <AdminSidebar />
+      <div className="min-w-0 flex-1">
+        <AdminGate>{children}</AdminGate>
+      </div>
+    </div>
   );
 }

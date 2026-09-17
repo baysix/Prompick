@@ -5,6 +5,7 @@ import Link from "next/link";
 import { adminApi, adminKeys } from "@/entities/admin/api/adminApi";
 import type { AdminTemplate } from "@/entities/admin/model/types";
 import { cn } from "@/shared/lib/cn";
+import { Card } from "@/widgets/admin-shell/Card";
 
 /**
  * 관리자 템플릿 목록.
@@ -19,18 +20,19 @@ export function AdminTemplateList() {
   });
 
   return (
-    <main className="mx-auto max-w-5xl flex-1 px-4 py-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-[20px] font-semibold text-ink">템플릿</h1>
+    <Card
+      title="전체 템플릿"
+      description="게시하려면 예시·제작 방법·(제공한다면) 프롬프트 원문이 모두 필요해요"
+      action={
         <Link
           href="/admin/templates/new"
-          className="rounded-sm bg-ink px-3 py-1.5 text-[13px] font-medium text-ground"
+          className="rounded-full bg-accent px-3.5 py-1.5 text-[13px] font-semibold text-accent-ink"
         >
           새로 만들기
         </Link>
-      </div>
-
-      <div className="mt-5">
+      }
+    >
+      <div>
         {isError ? (
           <p className="py-16 text-[13px] text-ink-soft">불러오지 못했어요.</p>
         ) : isPending ? (
@@ -40,14 +42,14 @@ export function AdminTemplateList() {
             아직 템플릿이 없어요. 유행하는 콘텐츠를 하나 등록해 보세요.
           </p>
         ) : (
-          <ul className="divide-y divide-line border-y border-line">
+          <ul className="divide-y divide-line">
             {data.map((t) => (
               <TemplateRow key={t.id} template={t} />
             ))}
           </ul>
         )}
       </div>
-    </main>
+    </Card>
   );
 }
 
@@ -91,7 +93,7 @@ function TemplateRow({ template: t }: { template: AdminTemplate }) {
         </div>
 
         {missing.length > 0 && (
-          <p className="mt-1 text-[12px] text-[#b0413e]">
+          <p className="mt-1 text-[12px] text-[#ff6b6b]">
             게시하려면 {missing.join(", ")}이(가) 필요해요
           </p>
         )}

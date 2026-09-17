@@ -71,7 +71,7 @@ export function ExploreView() {
 
   return (
     <main className="flex-1 pb-20">
-      <div className="sticky top-14 z-10 border-b border-line bg-ground/90 backdrop-blur">
+      <div className="sticky top-14 z-10 border-b border-line bg-ground/80 backdrop-blur">
         <div className="mx-auto max-w-6xl space-y-2.5 px-4 py-3">
           <FilterGroup
             label="종류"
@@ -185,8 +185,8 @@ function FilterGroup({
               className={cn(
                 "rounded-sm px-2 py-1 text-[13px] transition-colors",
                 selected
-                  ? "bg-ink text-ground"
-                  : "text-ink-soft hover:bg-ink/5 hover:text-ink",
+                  ? "bg-accent text-accent-ink"
+                  : "text-ink-soft hover:bg-surface hover:text-ink",
               )}
             >
               {option.label}
@@ -203,9 +203,9 @@ function FrameSkeletonGrid() {
     <div className="grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-3 lg:grid-cols-5">
       {Array.from({ length: 10 }).map((_, i) => (
         <div key={i}>
-          <div className="aspect-[9/16] bg-ink/5" />
-          <div className="mt-2 h-3 w-4/5 bg-ink/5" />
-          <div className="mt-1.5 h-2.5 w-1/2 bg-ink/5" />
+          <div className="aspect-[9/16] bg-surface" />
+          <div className="mt-2 h-3 w-4/5 bg-surface" />
+          <div className="mt-1.5 h-2.5 w-1/2 bg-surface" />
         </div>
       ))}
     </div>
