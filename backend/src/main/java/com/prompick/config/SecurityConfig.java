@@ -54,9 +54,11 @@ public class SecurityConfig {
                         // 가입은 로그인 전에 하는 일이다.
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/signup")
                         .permitAll()
-                        // 관리자 API는 파이프라인 원문을 다룬다. 관리자 로그인을 붙이면 ADMIN 검사로 바꾼다.
+                        // 관리자 API는 로그인 여부만 여기서 보고, ADMIN 권한은 AdminOnlyInterceptor가 본다.
+                        // 권한을 DB에서 읽어야 하기 때문이다. 토큰에 역할을 넣으면 권한을 회수해도
+                        // 이미 발급된 토큰이 만료될 때까지 통과한다.
                         .requestMatchers("/api/v1/admin/**")
-                        .permitAll()
+                        .authenticated()
                         // 그 밖의 API는 로그인이 필요하다. 실제 이용(제작, 프롬프트 열람, 마이페이지)이
                         // 여기에 해당한다.
                         .anyRequest()

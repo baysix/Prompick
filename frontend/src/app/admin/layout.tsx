@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { AdminGate } from "@/views/admin/AdminGate";
 
 export const metadata: Metadata = {
   title: "관리자",
@@ -28,7 +29,7 @@ export default function AdminLayout({ children }: LayoutProps<"/admin">) {
           </Link>
         </div>
       </header>
-      {children}
+      <AdminGate>{children}</AdminGate>
     </>
   );
 }
