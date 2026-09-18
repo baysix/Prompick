@@ -20,6 +20,8 @@
    강조색은 보라에서 청록으로 넘어가는 그라데이션이다. 단색 파랑보다 "만드는 재미"에 가깝고,
    AI 서비스가 흔히 쓰는 남색·형광 조합과도 겹치지 않는다.
    색을 갖는 것은 주요 버튼과 요금 배지뿐, 나머지는 흰색과 회색으로 만든다.
+
+   모서리는 12px을 기본으로 한다. 알약형은 버튼과 탭에만 쓴다.
 --------------------------------------------------------------------------- */
 @theme {
   --color-ground: #ffffff;
@@ -39,9 +41,9 @@
   --color-paid-soft: #fbf1dd;
 
   /* 주요 행동. 보라 → 청록 */
-  --color-accent: #7a2ff2;
+  --color-accent: #8b3dff;
   --color-accent-2: #00c4cc;
-  --color-accent-soft: #f2ebff;
+  --color-accent-soft: #f3ecff;
   --color-accent-ink: #ffffff;
 
   --font-sans: "Wanted Sans Variable", "Wanted Sans", system-ui, -apple-system, sans-serif;

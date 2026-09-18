@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
-import { Suspense } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useState } from "react";
 import { SERVICE } from "@/shared/config/env";
 import { cn } from "@/shared/lib/cn";
 import { UserMenu } from "./UserMenu";
@@ -37,14 +37,14 @@ export function SiteHeader() {
           <Nav />
         </Suspense>
 
-        <div className="ml-auto flex items-center gap-1.5">
-          <Link
-            href="/search"
-            aria-label="검색"
-            className="rounded-full p-2 text-ink-soft hover:bg-surface hover:text-ink"
-          >
-            <SearchIcon />
-          </Link>
+        <div className="ml-auto flex items-center gap-2">
+          {/*
+            검색은 헤더에 둔다. 첫 화면에서는 무엇을 만들 수 있는지 보여주는 게 먼저이고,
+            찾으러 온 사람은 어느 화면에서든 바로 칠 수 있어야 한다.
+          */}
+          <Suspense fallback={null}>
+            <HeaderSearch />
+          </Suspense>
           <UserMenu />
         </div>
       </div>
@@ -80,6 +80,34 @@ function Nav() {
         );
       })}
     </nav>
+  );
+}
+
+/** 헤더 검색. 좁은 화면에서는 아이콘만 남는다 */
+function HeaderSearch() {
+  const router = useRouter();
+  const [query, setQuery] = useState("");
+
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        const trimmed = query.trim();
+        if (trimmed) router.push(`/search?q=${encodeURIComponent(trimmed)}`);
+      }}
+      className="hidden items-center gap-1.5 rounded-full border border-line bg-surface px-3 py-1.5 sm:flex"
+    >
+      <span className="text-ink-faint" aria-hidden>
+        <SearchIcon />
+      </span>
+      <input
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="찾아보기"
+        aria-label="템플릿 검색"
+        className="w-28 bg-transparent text-[13px] text-ink outline-none placeholder:text-ink-faint lg:w-40"
+      />
+    </form>
   );
 }
 
