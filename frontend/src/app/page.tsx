@@ -1,6 +1,6 @@
 import { templateApi } from "@/entities/template/api/templateApi";
 import type { HomeData, TemplateCard } from "@/entities/template/model/types";
-import { GradientHero } from "@/widgets/hero/GradientHero";
+import { MosaicHero } from "@/widgets/hero/MosaicHero";
 import { PopularSection } from "@/widgets/showcase/PopularSection";
 import { ClosingCta, HowItWorks } from "@/widgets/showcase/HowItWorks";
 import { SiteFooter } from "@/widgets/site-footer/SiteFooter";
@@ -30,7 +30,7 @@ export default async function HomePage() {
     <>
       <SiteHeader />
       <main className="flex-1">
-        <GradientHero samples={all} />
+        <MosaicHero items={all} />
 
         {failed ? (
           <Notice
