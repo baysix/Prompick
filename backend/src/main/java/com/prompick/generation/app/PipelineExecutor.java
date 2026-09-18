@@ -252,7 +252,6 @@ public class PipelineExecutor {
         if (contentType == null) return fallback;
         if (contentType.startsWith("video/")) return ContentType.VIDEO;
         if (contentType.startsWith("image/")) return ContentType.IMAGE;
-        if (contentType.startsWith("audio/")) return ContentType.AUDIO;
         return fallback;
     }
 

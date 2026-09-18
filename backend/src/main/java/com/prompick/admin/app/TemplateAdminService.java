@@ -51,8 +51,7 @@ public class TemplateAdminService {
         }
         Category category = findCategory(form.categorySlug());
 
-        Template template =
-                new Template(form.slug(), form.title(), form.contentType(), category);
+        Template template = new Template(form.slug(), form.title(), form.contentType(), category);
         apply(template, form, category);
 
         return toResponse(templates.save(template));
@@ -118,11 +117,19 @@ public class TemplateAdminService {
         return templates.findById(id).orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND));
     }
 
+    /**
+     * 주제 묶음을 찾는다. 지금은 쓰지 않으므로 비워 두어도 된다.
+     *
+     * <p>분류는 영상이냐 이미지냐 하나로 충분하다. 템플릿이 많아져 묶을 필요가 생기면 그때 쓴다.
+     */
     private Category findCategory(String slug) {
+        if (slug == null || slug.isBlank()) {
+            return null;
+        }
         return categories.findByActiveTrueOrderBySortOrderAscIdAsc().stream()
                 .filter(c -> c.getSlug().equals(slug))
                 .findFirst()
-                .orElseThrow(() -> new ApiException(ErrorCode.INVALID_REQUEST, "없는 주제예요."));
+                .orElse(null);
     }
 
     private AdminTemplateResponse toResponse(Template t) {

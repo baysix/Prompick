@@ -67,10 +67,10 @@ export function TemplateDetailView({ template }: { template: TemplateDetail }) {
           <div className="space-y-7">
             <header className="space-y-2.5">
               <Link
-                href={`/explore?category=${template.categorySlug}`}
+                href={`/explore?contentType=${template.contentType}`}
                 className="text-[12px] text-ink-faint hover:text-ink"
               >
-                {template.categoryName}
+                {template.contentType === "VIDEO" ? "영상" : "이미지"}
               </Link>
               <h1 className="text-[24px] font-semibold leading-tight tracking-tight text-ink">
                 {template.title}

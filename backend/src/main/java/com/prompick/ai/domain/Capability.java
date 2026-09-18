@@ -15,7 +15,5 @@ public enum Capability {
     /** 이미지 편집. 배경 제거, 비율 맞추기 */
     IMAGE_EDIT,
     /** 영상 생성 */
-    VIDEO,
-    /** 음성·음악 생성 */
-    AUDIO
+    VIDEO
 }

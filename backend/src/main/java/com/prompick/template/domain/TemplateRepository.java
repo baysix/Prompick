@@ -9,9 +9,12 @@ import org.springframework.data.repository.query.Param;
 
 public interface TemplateRepository extends JpaRepository<Template, Long> {
 
+    // 주제 묶음은 선택 항목이라 비어 있을 수 있다. 내부 조인으로 가져오면 묶음이 없는
+    // 템플릿이 통째로 목록에서 빠진다.
+
     @Query("""
             select t from Template t
-              join fetch t.category
+              left join fetch t.category
              where t.slug = :slug and t.status = com.prompick.template.domain.TemplateStatus.PUBLISHED
             """)
     Optional<Template> findPublishedBySlug(@Param("slug") String slug);
@@ -23,7 +26,7 @@ public interface TemplateRepository extends JpaRepository<Template, Long> {
      */
     @Query("""
             select t from Template t
-              join fetch t.category c
+              left join fetch t.category c
              where t.status = com.prompick.template.domain.TemplateStatus.PUBLISHED
                and (:contentType is null or t.contentType = :contentType)
                and (:categorySlug is null or c.slug = :categorySlug)
@@ -51,7 +54,7 @@ public interface TemplateRepository extends JpaRepository<Template, Long> {
 
     @Query("""
             select t from Template t
-              join fetch t.category c
+              left join fetch t.category c
              where t.status = com.prompick.template.domain.TemplateStatus.PUBLISHED
                and (:contentType is null or t.contentType = :contentType)
                and (:categorySlug is null or c.slug = :categorySlug)
@@ -76,7 +79,7 @@ public interface TemplateRepository extends JpaRepository<Template, Long> {
 
     @Query("""
             select t from Template t
-              join fetch t.category
+              left join fetch t.category
              where t.status = com.prompick.template.domain.TemplateStatus.PUBLISHED
                and (:contentType is null or t.contentType = :contentType)
              order by t.pinned desc, t.trendScore desc, t.id desc
@@ -85,7 +88,7 @@ public interface TemplateRepository extends JpaRepository<Template, Long> {
 
     @Query("""
             select t from Template t
-              join fetch t.category
+              left join fetch t.category
              where t.status = com.prompick.template.domain.TemplateStatus.PUBLISHED
                and t.promptAccess = :access
              order by t.trendScore desc, t.id desc
@@ -94,7 +97,7 @@ public interface TemplateRepository extends JpaRepository<Template, Long> {
 
     @Query("""
             select t from Template t
-              join fetch t.category
+              left join fetch t.category
              where t.status = com.prompick.template.domain.TemplateStatus.PUBLISHED
                and t.generateAccess = :access
              order by t.trendScore desc, t.id desc
@@ -103,7 +106,7 @@ public interface TemplateRepository extends JpaRepository<Template, Long> {
 
     @Query("""
             select t from Template t
-              join fetch t.category
+              left join fetch t.category
              where t.status = com.prompick.template.domain.TemplateStatus.PUBLISHED
              order by t.publishedAt desc nulls last, t.id desc
             """)
@@ -112,7 +115,7 @@ public interface TemplateRepository extends JpaRepository<Template, Long> {
     /** 제목·설명·태그 검색 */
     @Query("""
             select distinct t from Template t
-              join fetch t.category
+              left join fetch t.category
               left join t.tags tag
              where t.status = com.prompick.template.domain.TemplateStatus.PUBLISHED
                and (lower(t.title) like lower(concat('%', :q, '%'))

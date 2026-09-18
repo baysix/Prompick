@@ -31,7 +31,7 @@ public class TemplateAssembler {
                 t.getSlug(),
                 t.getTitle(),
                 t.getContentType(),
-                t.getCategory().getName(),
+                categoryNameOf(t),
                 media == null ? null : url(media.getPreviewKey()),
                 media == null ? null : url(media.getThumbnailKey()),
                 t.getRequiredPhotoSummary(),
@@ -58,7 +58,7 @@ public class TemplateAssembler {
                 t.getTitle(),
                 t.getDescription(),
                 t.getContentType(),
-                t.getCategory().getName(),
+                categoryNameOf(t),
                 t.getCategory().getSlug(),
                 List.copyOf(t.getTags()),
                 t.getMedia().stream()
@@ -98,6 +98,14 @@ public class TemplateAssembler {
                 f.isRequired(),
                 f.getOptions(),
                 f.getValidation());
+    }
+
+    /** 주제 묶음은 선택 항목이다. 없으면 콘텐츠 타입으로 대신한다. */
+    private static String categoryNameOf(Template t) {
+        if (t.getCategory() != null) {
+            return t.getCategory().getName();
+        }
+        return t.getContentType() == com.prompick.template.domain.ContentType.VIDEO ? "영상" : "이미지";
     }
 
     /** 템플릿 예시는 공개 버킷에 있다. 서명하지 않으므로 목록을 그릴 때 네트워크 호출이 없다. */

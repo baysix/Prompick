@@ -17,7 +17,8 @@ public record TemplateForm(
         @NotBlank(message = "제목을 입력해주세요") String title,
         String description,
         @NotNull(message = "종류를 골라주세요") ContentType contentType,
-        @NotBlank(message = "주제를 골라주세요") String categorySlug,
+        /** 주제 묶음. 지금은 쓰지 않으므로 비워도 된다 */
+        String categorySlug,
 
         // 이용 방식별 요금
         @NotNull(message = "프롬프트 제공 방식을 골라주세요") PromptAccess promptAccess,

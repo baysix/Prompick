@@ -38,7 +38,13 @@ public class Template {
     @Column(name = "content_type", nullable = false, length = 20)
     private ContentType contentType;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    /**
+     * 주제 묶음. 지금은 쓰지 않는다.
+     *
+     * <p>분류는 "영상이냐 이미지냐" 하나로 충분하다. 그 아래 주제까지 두면 층이 두 개가 되어
+     * 고를 것이 늘기만 한다. 템플릿이 많아져 묶을 필요가 생기면 그때 다시 쓴다.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
     private Category category;
 

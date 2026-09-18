@@ -1,8 +1,8 @@
 "use client";
 
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { templateApi, templateKeys } from "@/entities/template/api/templateApi";
 import { TemplateFrame } from "@/entities/template/ui/TemplateFrame";
 import type { ContentType, TemplateListParams } from "@/entities/template/model/types";
@@ -19,30 +19,22 @@ export function ExploreView() {
   const params = useSearchParams();
 
   const contentType = (params.get("contentType") as ContentType | null) ?? undefined;
-  const category = params.get("category") ?? undefined;
   const pricing = (params.get("pricing") as "ALL" | "FREE" | "PAID" | null) ?? "ALL";
   const promptOnly = params.get("promptOnly") === "true";
   const sort = (params.get("sort") as "TREND" | "LATEST" | null) ?? "TREND";
 
-  const query: TemplateListParams = { contentType, category, pricing, promptOnly, sort };
+  const query: TemplateListParams = { contentType, pricing, promptOnly, sort };
 
-  const setParam = useCallback(
-    (key: string, value: string | null) => {
-      const next = new URLSearchParams(params.toString());
-      if (value === null || value === "" || value === "ALL" || value === "false") {
-        next.delete(key);
-      } else {
-        next.set(key, value);
-      }
-      router.replace(`/explore?${next.toString()}`, { scroll: false });
-    },
-    [params, router],
-  );
-
-  const { data: categories } = useQuery({
-    queryKey: templateKeys.categories(contentType),
-    queryFn: () => templateApi.categories(contentType),
-  });
+  // 필터를 바꾸면 주소를 바꾼다. 컴파일러가 알아서 최적화하므로 직접 감싸지 않는다.
+  function setParam(key: string, value: string | null) {
+    const next = new URLSearchParams(params.toString());
+    if (value === null || value === "" || value === "ALL" || value === "false") {
+      next.delete(key);
+    } else {
+      next.set(key, value);
+    }
+    router.replace(`/explore?${next.toString()}`, { scroll: false });
+  }
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isPending, isError } =
     useInfiniteQuery({
@@ -83,18 +75,6 @@ export function ExploreView() {
             current={contentType ?? ""}
             onSelect={(v) => setParam("contentType", v || null)}
           />
-
-          {categories && categories.length > 0 && (
-            <FilterGroup
-              label="주제"
-              options={[
-                { value: "", label: "전체" },
-                ...categories.map((c) => ({ value: c.slug, label: c.name })),
-              ]}
-              current={category ?? ""}
-              onSelect={(v) => setParam("category", v || null)}
-            />
-          )}
 
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2.5">
             <FilterGroup

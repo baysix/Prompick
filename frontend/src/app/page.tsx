@@ -1,7 +1,7 @@
 import { templateApi } from "@/entities/template/api/templateApi";
-import type { Category, HomeData } from "@/entities/template/model/types";
+import type { HomeData } from "@/entities/template/model/types";
 import { SearchHero } from "@/widgets/hero/SearchHero";
-import { CategoryTiles } from "@/widgets/showcase/CategoryTiles";
+import { TypeTiles } from "@/widgets/showcase/TypeTiles";
 import { ClosingCta, HowItWorks } from "@/widgets/showcase/HowItWorks";
 import { TemplateRow } from "@/widgets/template-row/TemplateRow";
 import { SiteFooter } from "@/widgets/site-footer/SiteFooter";
@@ -12,30 +12,26 @@ export const revalidate = 60;
 
 export default async function HomePage() {
   let home: HomeData = { sections: [] };
-  let categories: Category[] = [];
   let failed = false;
 
   try {
-    [home, categories] = await Promise.all([templateApi.home(), templateApi.categories()]);
+    home = await templateApi.home();
   } catch {
     failed = true;
   }
 
-  const all = home.sections.flatMap((s) => s.items);
-
-  // 카테고리마다 그 안의 결과물 하나를 대표로 세운다. 이름만 나열하면 무엇이 나오는지
-  // 상상해야 하는데, 그림이 있으면 고르는 판단이 즉시 이뤄진다.
-  const tiles = categories.slice(0, 6).map((category) => ({
-    slug: category.slug,
-    name: category.name,
-    sample: all.find((t) => t.categoryName === category.name) ?? null,
-  }));
+  // 같은 템플릿이 여러 섹션에 나오므로 한 번씩만 남긴다
+  const all = Array.from(
+    new Map(home.sections.flatMap((s) => s.items).map((t) => [t.slug, t])).values(),
+  );
+  const video = all.filter((t) => t.contentType === "VIDEO");
+  const image = all.filter((t) => t.contentType === "IMAGE");
 
   return (
     <>
       <SiteHeader />
       <main className="flex-1">
-        <SearchHero categories={categories} />
+        <SearchHero />
 
         {failed ? (
           <Notice
@@ -49,7 +45,7 @@ export default async function HomePage() {
           />
         ) : (
           <>
-            <CategoryTiles items={tiles} />
+            <TypeTiles video={video} image={image} />
 
             <div className="mx-auto max-w-7xl">
               {home.sections.slice(0, 2).map((section) => (

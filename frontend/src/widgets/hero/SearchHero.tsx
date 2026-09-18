@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import type { Category } from "@/entities/template/model/types";
 
 /**
  * 첫 화면.
@@ -11,10 +10,12 @@ import type { Category } from "@/entities/template/model/types";
  * 검색창을 한가운데 크게 둔다. 이 서비스에 오는 사람은 대개 "본 게 있어서" 온다 —
  * 릴스에서 어떤 영상을 보고 그걸 찾으러 오는 것이라, 둘러보기보다 찾기가 먼저다.
  *
- * 검색창 아래에 카테고리를 칩으로 깐다. 무엇을 검색해야 할지 모르는 사람에게는
- * 빈 검색창이 벽이 되기 때문에, 바로 누를 수 있는 입구를 함께 준다.
+ * 검색창 아래에 영상·이미지 두 갈래를 둔다. 무엇을 검색해야 할지 모르는 사람에게 빈
+ * 검색창은 벽이 되기 때문에, 바로 누를 수 있는 입구를 함께 준다.
+ *
+ * 이 서비스가 만드는 것은 영상과 이미지 둘뿐이라 갈림길도 둘이면 충분하다.
  */
-export function SearchHero({ categories }: { categories: Category[] }) {
+export function SearchHero() {
   const router = useRouter();
   const [query, setQuery] = useState("");
 
@@ -81,15 +82,18 @@ export function SearchHero({ categories }: { categories: Category[] }) {
           >
             이미지
           </Link>
-          {categories.slice(0, 5).map((category) => (
-            <Link
-              key={category.slug}
-              href={`/explore?category=${category.slug}`}
-              className="rounded-full border border-line px-4 py-2 text-[13px] font-medium text-ink hover:bg-surface"
-            >
-              {category.name}
-            </Link>
-          ))}
+          <Link
+            href="/explore?pricing=FREE"
+            className="rounded-full border border-line px-4 py-2 text-[13px] font-medium text-ink hover:bg-surface"
+          >
+            무료
+          </Link>
+          <Link
+            href="/explore?promptOnly=true"
+            className="rounded-full border border-line px-4 py-2 text-[13px] font-medium text-ink hover:bg-surface"
+          >
+            프롬프트 주는 것
+          </Link>
         </div>
       </div>
     </section>
