@@ -91,7 +91,7 @@ prompick:
 
   free:
     # 계정당 하루 무료 자동 제작 횟수 (KST 자정 초기화)
-    daily-generate-limit: 3
+    daily-generate-limit: ${FREE_DAILY_LIMIT:3}
     # 무료 결과물 워터마크 적용 여부
     watermark: true
     # 무료 제작에 휴대폰 본인인증을 요구할지

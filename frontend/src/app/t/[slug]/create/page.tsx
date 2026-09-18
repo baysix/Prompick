@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { templateApi } from "@/entities/template/api/templateApi";
-import { CreateWizard } from "@/views/create/CreateWizard";
+import { CreateForm } from "@/views/create/CreateForm";
 import { SiteHeader } from "@/widgets/site-header/SiteHeader";
 
 export const metadata: Metadata = {
@@ -23,7 +23,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
     <>
       <SiteHeader />
       <main className="flex-1">
-        <CreateWizard template={template} />
+        <CreateForm template={template} />
       </main>
     </>
   );
