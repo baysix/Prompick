@@ -14,37 +14,50 @@
 /* ---------------------------------------------------------------------------
    색
 
-   흰 바탕 위에 결과물을 둥근 타일로 얹는다. 어두운 바탕은 영상 하나하나는 돋보이지만
-   목록에서 서로 뭉개지고, 무엇보다 이 서비스는 "도구"에 가깝다 — 매일 열어 쓰는 화면은
-   밝은 편이 지치지 않는다.
+   흰 바탕 위에 결과물을 큼직한 둥근 타일로 얹는다. 만드는 도구는 매일 열어 쓰는 화면이라
+   밝은 편이 지치지 않고, 결과물의 색이 화면에서 가장 진해야 한다.
 
-   색을 갖는 것은 세 가지뿐이다. 주요 행동(파랑), 무료(초록), 유료(금색).
-   나머지는 흰색과 회색으로만 만든다. 그래야 타일 속 영상 색이 화면의 주인공이 된다.
+   강조색은 보라에서 청록으로 넘어가는 그라데이션이다. 단색 파랑보다 "만드는 재미"에 가깝고,
+   AI 서비스가 흔히 쓰는 남색·형광 조합과도 겹치지 않는다.
+   색을 갖는 것은 주요 버튼과 요금 배지뿐, 나머지는 흰색과 회색으로 만든다.
 --------------------------------------------------------------------------- */
 @theme {
   --color-ground: #ffffff;
-  --color-surface: #f6f7f9;
-  --color-surface-2: #eef0f4;
-  --color-line: #e5e7ec;
-  --color-line-soft: #f0f1f4;
+  --color-surface: #f7f7fb;
+  --color-surface-2: #eeeef5;
+  --color-line: #e6e6ef;
+  --color-line-soft: #f1f1f7;
 
-  --color-ink: #16181d;
-  --color-ink-soft: #5a616e;
-  --color-ink-faint: #9aa1ae;
+  --color-ink: #12121a;
+  --color-ink-soft: #55556b;
+  --color-ink-faint: #9494a8;
 
   /* 무료는 초록, 유료는 금색 */
-  --color-free: #15803d;
-  --color-free-soft: #e8f5ec;
+  --color-free: #167d4a;
+  --color-free-soft: #e6f5ec;
   --color-paid: #9a6a12;
   --color-paid-soft: #fbf1dd;
 
-  /* 주요 행동 하나에만 쓰는 색 */
-  --color-accent: #2b62ff;
-  --color-accent-soft: #eaefff;
+  /* 주요 행동. 보라 → 청록 */
+  --color-accent: #7a2ff2;
+  --color-accent-2: #00c4cc;
+  --color-accent-soft: #f2ebff;
   --color-accent-ink: #ffffff;
 
   --font-sans: "Wanted Sans Variable", "Wanted Sans", system-ui, -apple-system, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+
+/* 주요 버튼과 강조 요소에 쓰는 그라데이션. 한 곳에 정의해 톤이 흩어지지 않게 한다 */
+.bg-brand {
+  background-image: linear-gradient(97deg, var(--color-accent) 0%, var(--color-accent-2) 100%);
+}
+
+.text-brand {
+  background-image: linear-gradient(97deg, var(--color-accent) 0%, var(--color-accent-2) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 html {

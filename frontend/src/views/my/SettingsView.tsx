@@ -39,13 +39,13 @@ export function SettingsView() {
             value={value}
             onChange={(e) => setNickname(e.target.value)}
             maxLength={20}
-            className="min-w-0 flex-1 rounded-xl border border-line bg-ground px-3.5 py-2.5 text-[14px] text-ink"
+            className="min-w-0 flex-1 rounded-2xl border border-line bg-ground px-3.5 py-2.5 text-[14px] text-ink"
           />
           <button
             type="button"
             onClick={() => save.mutate()}
             disabled={save.isPending || value.trim().length < 2}
-            className="rounded-full bg-accent px-4 py-2.5 text-[14px] font-semibold text-accent-ink disabled:opacity-40"
+            className="bg-brand rounded-full px-4 py-2.5 text-[14px] font-semibold text-accent-ink disabled:opacity-40"
           >
             {save.isPending ? "저장 중" : "저장"}
           </button>
@@ -56,7 +56,7 @@ export function SettingsView() {
 
       <section>
         <h2 className="text-[15px] font-semibold text-ink">계정</h2>
-        <dl className="mt-3 divide-y divide-line rounded-xl border border-line">
+        <dl className="mt-3 divide-y divide-line rounded-2xl border border-line">
           <Row label="이메일" value={me?.email ?? "-"} />
           <Row
             label="휴대폰 인증"

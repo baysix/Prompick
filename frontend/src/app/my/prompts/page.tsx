@@ -11,7 +11,7 @@ export default function Page() {
         action={
           <Link
             href="/explore"
-            className="inline-block rounded-full bg-accent px-4 py-2 text-[14px] font-semibold text-accent-ink"
+            className="bg-brand inline-block rounded-full px-4 py-2 text-[14px] font-semibold text-accent-ink"
           >
             템플릿 둘러보기
           </Link>

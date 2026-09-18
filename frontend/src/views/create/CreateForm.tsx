@@ -62,7 +62,7 @@ export function CreateForm({ template }: { template: TemplateDetail }) {
         <p className="text-[15px] font-semibold text-ink">로그인하면 바로 만들 수 있어요</p>
         <Link
           href={`/login?next=${encodeURIComponent(`/t/${template.slug}/create`)}`}
-          className="mt-4 inline-block rounded-full bg-accent px-5 py-2.5 text-[14px] font-semibold text-accent-ink"
+          className="bg-brand mt-4 inline-block rounded-full px-5 py-2.5 text-[14px] font-semibold text-accent-ink"
         >
           로그인
         </Link>
@@ -92,7 +92,7 @@ export function CreateForm({ template }: { template: TemplateDetail }) {
           <img
             src={example}
             alt=""
-            className="h-24 w-[68px] shrink-0 rounded-xl border border-line object-cover"
+            className="h-24 w-[68px] shrink-0 rounded-2xl border border-line object-cover"
           />
         )}
         <div className="min-w-0">
@@ -182,7 +182,7 @@ export function CreateForm({ template }: { template: TemplateDetail }) {
                 <input
                   value={String(values[field.fieldKey] ?? "")}
                   onChange={(e) => setValues((v) => ({ ...v, [field.fieldKey]: e.target.value }))}
-                  className="mt-2 w-full rounded-xl border border-line bg-ground px-3.5 py-2.5 text-[14px]"
+                  className="mt-2 w-full rounded-2xl border border-line bg-ground px-3.5 py-2.5 text-[14px]"
                 />
               )}
             </div>
@@ -219,7 +219,7 @@ export function CreateForm({ template }: { template: TemplateDetail }) {
             type="button"
             onClick={() => create.mutate()}
             disabled={!ready || create.isPending}
-            className="shrink-0 rounded-full bg-accent px-6 py-3 text-[15px] font-semibold text-accent-ink disabled:opacity-40"
+            className="bg-brand shrink-0 rounded-full px-6 py-3 text-[15px] font-semibold text-accent-ink disabled:opacity-40"
           >
             {create.isPending ? "보내는 중" : blocked ? "사진을 바꿔주세요" : "만들기"}
           </button>
@@ -312,7 +312,7 @@ function PhotoDrop({
             )}
           />
         ) : (
-          <span className="flex h-20 w-16 shrink-0 items-center justify-center rounded-lg bg-surface">
+          <span className="flex h-20 w-16 shrink-0 items-center justify-center rounded-2xl bg-surface">
             <PlusIcon />
           </span>
         )}

@@ -33,7 +33,7 @@ export function JobView({ jobId }: { jobId: number }) {
         <p className="text-[15px] font-semibold text-ink">로그인이 필요해요</p>
         <Link
           href={`/login?next=${encodeURIComponent(`/jobs/${jobId}`)}`}
-          className="mt-4 inline-block rounded-full bg-accent px-4 py-2 text-[14px] font-semibold text-accent-ink"
+          className="bg-brand mt-4 inline-block rounded-full px-4 py-2 text-[14px] font-semibold text-accent-ink"
         >
           로그인
         </Link>
@@ -112,7 +112,7 @@ function Succeeded({ job }: { job: Job }) {
           <a
             href={output.url}
             download
-            className="rounded-full bg-accent px-5 py-2.5 text-[14px] font-semibold text-accent-ink"
+            className="bg-brand rounded-full px-5 py-2.5 text-[14px] font-semibold text-accent-ink"
           >
             내려받기
           </a>
@@ -162,7 +162,7 @@ function Failed({ job }: { job: Job }) {
         {job.templateSlug && (
           <Link
             href={`/t/${job.templateSlug}/create`}
-            className="rounded-full bg-accent px-5 py-2.5 text-[14px] font-semibold text-accent-ink"
+            className="bg-brand rounded-full px-5 py-2.5 text-[14px] font-semibold text-accent-ink"
           >
             다시 해보기
           </Link>

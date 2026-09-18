@@ -16,7 +16,7 @@ export function Card({
   className?: string;
 }) {
   return (
-    <section className={cn("rounded-xl border border-line bg-surface", className)}>
+    <section className={cn("rounded-2xl border border-line bg-surface", className)}>
       {(title || action) && (
         <div className="flex flex-wrap items-center gap-3 border-b border-line px-5 py-3.5">
           <div>
@@ -44,7 +44,7 @@ export function StatTile({
   hint?: string;
 }) {
   return (
-    <div className="rounded-xl border border-line bg-surface px-5 py-4">
+    <div className="rounded-2xl border border-line bg-surface px-5 py-4">
       <p className="text-[12px] text-ink-soft">{label}</p>
       <p className="mt-1.5 text-[26px] font-semibold leading-none tracking-tight text-ink">
         {typeof value === "number" ? value.toLocaleString() : value}

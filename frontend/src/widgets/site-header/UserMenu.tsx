@@ -18,7 +18,7 @@ export function UserMenu() {
     return (
       <Link
         href={`/login?next=${encodeURIComponent(pathname)}`}
-        className="rounded-full bg-accent px-3.5 py-1.5 text-[13px] font-semibold text-accent-ink"
+        className="bg-brand rounded-full px-3.5 py-1.5 text-[13px] font-semibold text-accent-ink"
       >
         로그인
       </Link>

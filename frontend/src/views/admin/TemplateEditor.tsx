@@ -84,7 +84,7 @@ export function TemplateEditor({ templateId }: { templateId: number | null }) {
             type="button"
             onClick={() => save.mutate()}
             disabled={save.isPending}
-            className="rounded-full bg-accent px-3.5 py-1.5 text-[13px] font-semibold text-accent-ink disabled:opacity-40"
+            className="bg-brand rounded-full px-3.5 py-1.5 text-[13px] font-semibold text-accent-ink disabled:opacity-40"
           >
             {save.isPending ? "저장 중" : "저장"}
           </button>

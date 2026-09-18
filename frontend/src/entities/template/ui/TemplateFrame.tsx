@@ -63,7 +63,7 @@ export function TemplateFrame({
       className={cn("group block", className)}
       aria-label={template.title}
     >
-      <div className="relative aspect-[9/16] overflow-hidden rounded-lg bg-surface">
+      <div className="relative aspect-[9/16] overflow-hidden rounded-2xl bg-surface">
         {isVideo ? (
           <video
             ref={videoRef}

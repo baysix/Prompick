@@ -34,7 +34,7 @@ export function MyShell({ children }: { children: ReactNode }) {
         <p className="text-[15px] font-semibold text-ink">로그인이 필요해요</p>
         <Link
           href={`/login?next=${encodeURIComponent(pathname)}`}
-          className="mt-4 inline-block rounded-full bg-accent px-4 py-2 text-[14px] font-semibold text-accent-ink"
+          className="bg-brand mt-4 inline-block rounded-full px-4 py-2 text-[14px] font-semibold text-accent-ink"
         >
           로그인
         </Link>

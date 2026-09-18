@@ -9,11 +9,11 @@ import type { HomeSection } from "@/entities/template/model/types";
  */
 export function TemplateRow({ section }: { section: HomeSection }) {
   return (
-    <section className="py-7">
-      <div className="mx-auto max-w-6xl px-4">
+    <section className="py-8">
+      <div className="px-4">
         <div className="flex items-baseline justify-between gap-4">
           <div>
-            <h2 className="text-[17px] font-semibold tracking-tight text-ink">{section.title}</h2>
+            <h2 className="text-[19px] font-bold tracking-tight text-ink">{section.title}</h2>
             {section.subtitle && (
               <p className="mt-0.5 text-[13px] text-ink-soft">{section.subtitle}</p>
             )}
@@ -28,13 +28,13 @@ export function TemplateRow({ section }: { section: HomeSection }) {
       </div>
 
       <div className="scroll-row mt-4 overflow-x-auto">
-        <div className="mx-auto flex w-max max-w-6xl gap-3 px-4">
+        <div className="flex w-max gap-3 px-4">
           {section.items.map((template, index) => (
             <TemplateFrame
               key={template.slug}
               template={template}
               priority={index < 3}
-              className="w-[144px] shrink-0 snap-start sm:w-[168px]"
+              className="w-[150px] shrink-0 snap-start sm:w-[176px]"
             />
           ))}
         </div>
