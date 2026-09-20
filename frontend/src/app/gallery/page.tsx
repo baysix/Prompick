@@ -4,7 +4,9 @@ import { TemplateTile } from "@/entities/template/ui/TemplateTile";
 import type { TemplateCard } from "@/entities/template/model/types";
 import { EmptyState, PageShell } from "@/widgets/page-shell/PageShell";
 
-export const revalidate = 60;
+// 매 요청마다 서버에서 새로 그린다. 관리자가 템플릿을 고치면 바로 반영된다.
+// 대신 Render 무료 인스턴스가 잠들어 있으면 첫 방문자가 깨어날 때까지 기다린다.
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "갤러리",

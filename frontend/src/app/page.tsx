@@ -7,8 +7,9 @@ import { PresetSection } from "@/widgets/showcase/PresetSection";
 import { SiteFooter } from "@/widgets/site-footer/SiteFooter";
 import { SiteHeader } from "@/widgets/site-header/SiteHeader";
 
-// 홈은 검색 유입의 입구다. 서버에서 그려 내려보내고 1분마다 갱신한다.
-export const revalidate = 60;
+// 매 요청마다 서버에서 새로 그린다. 관리자가 템플릿을 고치면 바로 반영된다.
+// 대신 Render 무료 인스턴스가 잠들어 있으면 첫 방문자가 깨어날 때까지 기다린다.
+export const dynamic = "force-dynamic";
 
 /**
  * 홈.

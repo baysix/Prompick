@@ -58,6 +58,12 @@ export function TemplateTile({
   return (
     <Link
       href={`/t/${template.slug}`}
+      // 미리 당겨오지 않는다.
+      //
+      // Next 는 화면에 보이는 링크마다 그 페이지의 데이터를 미리 받아둔다. 타일이 서른 개면
+      // 요청이 서른 번이고, 상세 페이지가 매 요청마다 서버에서 그려지므로 그만큼 백엔드까지
+      // 내려간다. 사용자가 실제로 누르는 것은 그중 한둘이다. 누른 뒤에 받아도 늦지 않다.
+      prefetch={false}
       className={cn(
         "group relative block overflow-hidden rounded-xl bg-surface",
         shape,

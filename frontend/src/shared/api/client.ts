@@ -69,6 +69,12 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
     body: body !== undefined ? JSON.stringify(body) : undefined,
     // 리프레시 토큰이 HttpOnly 쿠키라 항상 쿠키를 함께 보낸다.
     credentials: "include",
+    // 캐시를 거치지 않는다.
+    //
+    // 서버에서는 Next 의 데이터 캐시를, 브라우저에서는 HTTP 캐시를 건너뛴다. 관리자가
+    // 템플릿을 고쳤는데 화면에는 옛것이 보이는 일을 막는 것이 이 서비스에서는 더 중요하다.
+    // 남은 캐시는 각 화면의 렌더 캐시와 react-query 뿐이고, 그쪽도 함께 풀어두었다.
+    cache: "no-store",
   });
 
   if (res.status === 204) {
