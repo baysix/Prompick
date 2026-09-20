@@ -1,5 +1,9 @@
 import { api } from "@/shared/api/client";
 import type {
+  AdminBugReport,
+  AdminNotice,
+  BugReportStatus,
+  NoticeForm,
   AdminTemplate,
   AiModel,
   Capability,
@@ -119,6 +123,21 @@ export const adminApi = {
 
   activatePipeline: (templateId: number, pipelineId: number) =>
     api.post<Pipeline>(`/admin/templates/${templateId}/pipelines/${pipelineId}/activate`),
+
+  // --- 공지사항 ---
+  notices: () => api.get<AdminNotice[]>("/admin/notices"),
+  createNotice: (form: NoticeForm) => api.post<AdminNotice>("/admin/notices", form),
+  updateNotice: (id: number, form: NoticeForm) =>
+    api.put<AdminNotice>(`/admin/notices/${id}`, form),
+  publishNotice: (id: number) => api.post<AdminNotice>(`/admin/notices/${id}/publish`),
+  unpublishNotice: (id: number) => api.post<AdminNotice>(`/admin/notices/${id}/unpublish`),
+  deleteNotice: (id: number) => api.delete<void>(`/admin/notices/${id}`),
+
+  // --- 오류 신고 ---
+  bugReports: (status?: BugReportStatus) =>
+    api.get<AdminBugReport[]>(`/admin/bug-reports${status ? `?status=${status}` : ""}`),
+  resolveBugReport: (id: number, status: BugReportStatus, adminNote: string) =>
+    api.post<AdminBugReport>(`/admin/bug-reports/${id}/resolve`, { status, adminNote }),
 };
 
 export const adminKeys = {
@@ -139,4 +158,6 @@ export const adminKeys = {
   pipelines: (templateId: number) => [...adminKeys.all, "pipelines", templateId] as const,
   inputFields: (templateId: number) => [...adminKeys.all, "input-fields", templateId] as const,
   media: (templateId: number) => [...adminKeys.all, "media", templateId] as const,
+  notices: () => [...adminKeys.all, "notices"] as const,
+  bugReports: (status?: string) => [...adminKeys.all, "bug-reports", status ?? "ALL"] as const,
 };

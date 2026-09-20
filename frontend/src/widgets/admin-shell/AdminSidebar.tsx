@@ -17,6 +17,8 @@ const NAV = [
   { href: "/admin/jobs", label: "제작 내역" },
   { href: "/admin/users", label: "사용자" },
   { href: "/admin/requests", label: "요청" },
+  { href: "/admin/reports", label: "오류 신고" },
+  { href: "/admin/notices", label: "공지사항" },
   { href: "/admin/templates", label: "템플릿" },
   { href: "/admin/ai-models", label: "AI 모델" },
   { href: "/admin/keys", label: "제공사 키" },

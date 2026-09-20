@@ -24,6 +24,7 @@ const GROUPS = [
       { href: "/pricing", label: "가격" },
       { href: "/notice", label: "공지사항" },
       { href: "/help", label: "도움말" },
+      { href: "/report", label: "오류 신고" },
     ],
   },
   {

@@ -364,3 +364,42 @@ export interface JobDetail {
   alreadyRefunded: boolean;
   refundable: { allowed: boolean; note: string };
 }
+
+/* --- 공지사항 --- */
+
+export interface AdminNotice {
+  id: number;
+  title: string;
+  body: string;
+  pinned: boolean;
+  /** 내보냈는지. false면 작성 중이라 사용자에게 보이지 않는다 */
+  published: boolean;
+  publishedAt: string | null;
+  updatedAt: string;
+}
+
+export interface NoticeForm {
+  title: string;
+  body: string;
+  pinned: boolean;
+}
+
+/* --- 오류 신고 --- */
+
+export type BugReportStatus = "OPEN" | "CONFIRMED" | "FIXED" | "NOT_A_BUG" | "DUPLICATE";
+
+export interface AdminBugReport {
+  id: number;
+  /** 신고한 사람. 이메일은 내려오지 않는다 */
+  nickname: string;
+  title: string;
+  body: string;
+  /** 어느 화면이었는지. 신고 화면이 자동으로 채운 값이다 */
+  pageUrl: string | null;
+  userAgent: string | null;
+  status: BugReportStatus;
+  statusLabel: string;
+  adminNote: string | null;
+  createdAt: string;
+  updatedAt: string;
+}

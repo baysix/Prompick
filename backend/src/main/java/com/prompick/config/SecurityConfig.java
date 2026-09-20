@@ -49,7 +49,10 @@ public class SecurityConfig {
                                 "/api/v1/templates/**",
                                 // 요청 게시판은 구경만 하러 온 사람도 볼 수 있어야 한다.
                                 // 사람들이 무엇을 원하는지는 이 서비스가 무엇인지 보여주는 정보다.
-                                "/api/v1/requests")
+                                "/api/v1/requests",
+                                // 공지는 로그인 없이 읽는다. 점검 안내는 로그인이 안 되는 상황에서
+                                // 가장 필요한 글인데, 그때 읽으려면 로그인부터 하라고 하면 소용이 없다.
+                                "/api/v1/notices")
                         .permitAll()
                         // 웹훅은 서명으로 검증한다. (포트원, AI 제공사)
                         .requestMatchers("/api/v1/webhooks/**")
