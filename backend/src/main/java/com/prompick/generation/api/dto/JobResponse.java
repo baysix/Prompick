@@ -27,7 +27,11 @@ public record JobResponse(
         /** 실패했을 때의 내부 에러 코드. 외부 응답 원문이 아니다 */
         String errorCode,
         List<OutputResponse> outputs,
+        /** 이 템플릿이 보통 걸리는 시간(초). 화면이 남은 시간을 가늠하는 데 쓴다 */
+        int estimatedSeconds,
         Instant createdAt,
+        /** 실제로 일을 시작한 시각. 큐에서 기다린 시간을 진행률에 섞지 않으려면 이쪽을 쓴다 */
+        Instant startedAt,
         Instant finishedAt) {
 
     /**

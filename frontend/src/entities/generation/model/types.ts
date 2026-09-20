@@ -31,7 +31,11 @@ export interface Job {
   statusMessage: string;
   errorCode: string | null;
   outputs: JobOutput[];
+  /** 이 템플릿이 보통 걸리는 시간(초) */
+  estimatedSeconds: number;
   createdAt: string;
+  /** 실제로 일을 시작한 시각. 큐에서 기다린 시간은 여기 안 들어간다 */
+  startedAt: string | null;
   finishedAt: string | null;
 }
 

@@ -135,7 +135,10 @@ public class JobQueryService {
                 messageFor(job),
                 job.getErrorCode(),
                 outputResponses,
+                // 템플릿이 지워졌으면 가늠할 근거가 없다. 흔한 값으로 둔다.
+                template == null ? 120 : template.getEstimatedSeconds(),
                 job.getCreatedAt(),
+                job.getStartedAt(),
                 job.getFinishedAt());
     }
 

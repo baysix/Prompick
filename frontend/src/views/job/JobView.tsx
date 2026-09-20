@@ -1,11 +1,12 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { generationApi, generationKeys } from "@/entities/generation/api/generationApi";
 import { isFinished, type Job } from "@/entities/generation/model/types";
 import { useSession } from "@/shared/auth/SessionProvider";
+import { cn } from "@/shared/lib/cn";
 import { Button, ButtonLink } from "@/shared/ui/Button";
 
 /**
@@ -66,25 +67,79 @@ export function JobView({ jobId }: { jobId: number }) {
   );
 }
 
+/**
+ * 진행률.
+ *
+ * AI 는 "몇 퍼센트 했는지"를 알려주지 않는다. 그러니 우리가 아는 것으로만 만들어야 한다 —
+ * 시작한 시각과, 이 템플릿이 보통 걸리는 시간.
+ *
+ * 곡선을 쓰는 이유가 있다. 남은 시간을 그대로 비율로 그리면 예상 시간을 넘기는 순간 100%에
+ * 닿아 버리고, 그다음부터는 다 됐다고 해놓고 안 끝나는 막대가 된다. 그건 멈춘 막대보다 나쁘다.
+ * 이 식은 예상 시간에서 86%쯤에 이르고 그 뒤로는 점점 느리게 오르며 100%에 닿지 않는다.
+ * 끝났다고 말하는 것은 오직 서버가 끝났다고 할 때뿐이다.
+ */
+function progressOf(elapsedSeconds: number, estimatedSeconds: number): number {
+  const estimate = estimatedSeconds > 0 ? estimatedSeconds : 120;
+  const curve = 1 - Math.exp((-2 * elapsedSeconds) / estimate);
+  return Math.min(Math.round(curve * 100), 97);
+}
+
+function formatDuration(seconds: number): string {
+  if (seconds < 60) return `${seconds}초`;
+  const minutes = Math.floor(seconds / 60);
+  const rest = seconds % 60;
+  return rest === 0 ? `${minutes}분` : `${minutes}분 ${rest}초`;
+}
+
 function Running({ job }: { job: Job }) {
-  const percent = job.totalSteps > 0 ? Math.round((job.currentStep / job.totalSteps) * 100) : 0;
+  // 1초마다 다시 그린다. 서버는 3초마다 물어보지만, 그사이에도 시간은 흐른다.
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // 아직 차례를 기다리는 중이면 시작 시각이 없다. 큐에서 기다린 시간을 제작 시간에
+  // 섞으면 "3분 걸린다더니 왜 5분째냐"가 된다.
+  const startedAt = job.startedAt ? Date.parse(job.startedAt) : null;
+  const waiting = startedAt === null;
+
+  const elapsed = waiting ? 0 : Math.max(0, Math.floor((now - startedAt) / 1000));
+  const percent = waiting ? 0 : progressOf(elapsed, job.estimatedSeconds);
+  const overdue = !waiting && elapsed > job.estimatedSeconds;
 
   return (
     <div className="mt-6">
       <div className="rounded-xl border border-line p-6">
-        <p className="text-[15px] font-medium text-ink">{job.statusMessage}</p>
+        <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+          <p className="text-[15px] font-medium text-ink">{job.statusMessage}</p>
+          {!waiting && (
+            <p className="font-mono text-[13px] text-ink-soft tabular-nums">{percent}%</p>
+          )}
+        </div>
 
         <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-surface-2">
           <div
-            className="h-full rounded-full bg-accent transition-[width] duration-700"
-            style={{ width: `${Math.max(percent, 8)}%` }}
+            className={cn(
+              "h-full rounded-full bg-accent",
+              // 기다리는 동안에는 길이가 아니라 숨결로 살아 있음을 보인다.
+              waiting ? "w-1/4 animate-pulse" : "transition-[width] duration-1000 ease-out",
+            )}
+            style={waiting ? undefined : { width: `${Math.max(percent, 4)}%` }}
           />
         </div>
 
-        <p className="mt-3 text-[12px] text-ink-faint">
+        <p className="mt-3 text-[12px] leading-relaxed text-ink-faint">
           {job.totalSteps > 1 && `${job.currentStep + 1}번째 단계 / 전체 ${job.totalSteps}단계 · `}
-          이 화면을 닫아도 계속 만들어져요
+          {waiting
+            ? "곧 시작돼요"
+            : overdue
+              ? `${formatDuration(elapsed)} 지났어요 · 예상보다 조금 더 걸리고 있어요`
+              : `${formatDuration(elapsed)} 지났어요 · 보통 ${formatDuration(job.estimatedSeconds)}쯤 걸려요`}
         </p>
+
+        <p className="mt-1 text-[12px] text-ink-faint">이 화면을 닫아도 계속 만들어져요</p>
       </div>
 
       <p className="mt-5 text-[13px] leading-relaxed text-ink-soft">
