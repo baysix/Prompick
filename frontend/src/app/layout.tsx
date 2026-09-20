@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 import { Providers } from "./providers";
 import { env, SERVICE } from "@/shared/config/env";
@@ -37,6 +38,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col">
         <Providers>{children}</Providers>
+        {/* 실사용자 성능 수치(LCP·INP 등)를 Vercel 로 보낸다. 화면에는 아무것도 그리지 않는다 */}
+        <SpeedInsights />
       </body>
     </html>
   );
