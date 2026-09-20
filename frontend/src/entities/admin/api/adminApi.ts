@@ -33,6 +33,9 @@ export const adminApi = {
   publish: (id: number) => api.post<AdminTemplate>(`/admin/templates/${id}/publish`),
   unpublish: (id: number) => api.post<AdminTemplate>(`/admin/templates/${id}/unpublish`),
 
+  /** 되돌릴 수 없다. 제작 내역이 있는 템플릿은 서버가 거절한다 */
+  deleteTemplate: (id: number) => api.delete<void>(`/admin/templates/${id}`),
+
   publicPrompt: (id: number) => api.get<PublicPromptForm>(`/admin/templates/${id}/public-prompt`),
   savePublicPrompt: (id: number, form: PublicPromptForm) =>
     api.put<PublicPromptForm>(`/admin/templates/${id}/public-prompt`, form),

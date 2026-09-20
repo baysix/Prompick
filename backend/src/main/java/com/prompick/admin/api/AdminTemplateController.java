@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
+import org.springframework.http.HttpStatus;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
@@ -79,6 +80,17 @@ public class AdminTemplateController {
     @Operation(summary = "내리기")
     public AdminTemplateResponse unpublish(@PathVariable Long id) {
         return service.unpublish(id);
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(
+            summary = "삭제",
+            description =
+                    "되돌릴 수 없다. 이 템플릿으로 만든 제작 내역이 하나라도 있으면 거절한다 —"
+                            + " 그 경우에는 내리기를 쓴다")
+    public void delete(@PathVariable Long id) {
+        service.delete(id);
     }
 
     @GetMapping("/{id}/public-prompt")

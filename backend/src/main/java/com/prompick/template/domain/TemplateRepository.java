@@ -4,10 +4,26 @@ import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Limit;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface TemplateRepository extends JpaRepository<Template, Long> {
+
+    /**
+     * 템플릿 한 줄을 지운다. 딸린 것들은 데이터베이스가 함께 지운다.
+     *
+     * <p>{@code delete(entity)} 를 쓰면 안 된다. media 와 inputFields 는 cascade 없는 단방향
+     * {@code @OneToMany} 라, Hibernate 가 부모를 지우기 전에 자식의 template_id 를 null 로
+     * 밀어버린다. 그 컬럼은 NOT NULL 이므로 거기서 제약 위반으로 죽는다.
+     *
+     * <p>스키마에는 이미 ON DELETE CASCADE 가 걸려 있다. 벌크 삭제로 보내 JPA 가 끼어들지
+     * 않게 하면, 미디어·입력칸·파이프라인·태그·공개 프롬프트가 데이터베이스에서 한 번에
+     * 정리된다.
+     */
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("delete from Template t where t.id = :id")
+    void deleteRowById(@Param("id") Long id);
 
     // 주제 묶음은 선택 항목이라 비어 있을 수 있다. 내부 조인으로 가져오면 묶음이 없는
     // 템플릿이 통째로 목록에서 빠진다.

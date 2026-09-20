@@ -4,6 +4,7 @@ import com.prompick.admin.api.dto.AdminTemplateResponse;
 import com.prompick.admin.api.dto.TemplateForm;
 import com.prompick.common.error.ApiException;
 import com.prompick.common.error.ErrorCode;
+import com.prompick.generation.domain.JobRepository;
 import com.prompick.template.domain.*;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -20,16 +21,19 @@ public class TemplateAdminService {
     private final CategoryRepository categories;
     private final TemplatePublicPromptRepository prompts;
     private final TemplatePipelineRepository pipelines;
+    private final JobRepository jobs;
 
     public TemplateAdminService(
             TemplateRepository templates,
             CategoryRepository categories,
             TemplatePublicPromptRepository prompts,
-            TemplatePipelineRepository pipelines) {
+            TemplatePipelineRepository pipelines,
+            JobRepository jobs) {
         this.templates = templates;
         this.categories = categories;
         this.prompts = prompts;
         this.pipelines = pipelines;
+        this.jobs = jobs;
     }
 
     @Transactional(readOnly = true)
@@ -105,6 +109,32 @@ public class TemplateAdminService {
         Template template = find(id);
         template.unpublish();
         return toResponse(template);
+    }
+
+    /**
+     * 템플릿을 지운다.
+     *
+     * 이 템플릿으로 만든 작업이 하나라도 있으면 거절한다. 작업 기록은 그 템플릿을 가리키고
+     * 있어서, 템플릿이 사라지면 사용자의 제작 내역과 환불 판단 화면이 무엇을 만들었는지
+     * 말하지 못하게 된다. 그 경우에 필요한 것은 삭제가 아니라 내리기다.
+     *
+     * 지울 수 있는 경우에는 미디어·입력칸·파이프라인·태그·공개 프롬프트가 함께 지워진다.
+     * 그 일은 데이터베이스가 한다 — 자세한 이유는 {@link TemplateRepository#deleteRowById}에
+     * 적어두었다. 저장소에 올라간 예시 이미지 파일 자체는 남는다.
+     */
+    public void delete(Long id) {
+        // 없는 id 에는 404 를 주기 위해 먼저 확인한다.
+        find(id);
+
+        long made = jobs.countByTemplateId(id);
+        if (made > 0) {
+            throw new ApiException(
+                    ErrorCode.INVALID_REQUEST,
+                    "이 템플릿으로 만든 제작 내역이 %d건 있어 지울 수 없어요. 대신 내리기를 쓰면 사용자에게 보이지 않아요."
+                            .formatted(made));
+        }
+
+        templates.deleteRowById(id);
     }
 
     private void apply(Template template, TemplateForm form, Category category) {

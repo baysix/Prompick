@@ -137,9 +137,18 @@ function Row({ template }: { template: AdminTemplate }) {
   const missing = missingParts(template);
   const live = template.status === "PUBLISHED";
 
+  // 삭제는 되돌릴 수 없어서 한 번 더 묻는다. 목록에서 줄이 붙어 있는 화면이라
+  // 잘못 누르기 쉽다.
+  const [confirming, setConfirming] = useState(false);
+
   const toggle = useMutation({
     mutationFn: () => (live ? adminApi.unpublish(template.id) : adminApi.publish(template.id)),
     onSettled: () => queryClient.invalidateQueries({ queryKey: adminKeys.templates() }),
+  });
+
+  const remove = useMutation({
+    mutationFn: () => adminApi.deleteTemplate(template.id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: adminKeys.templates() }),
   });
 
   return (
@@ -185,15 +194,58 @@ function Row({ template }: { template: AdminTemplate }) {
       </Td>
 
       <Td>
-        <Button
-          variant="secondary"
-          size="sm"
-          disabled={toggle.isPending || (!live && missing.length > 0)}
-          title={!live && missing.length > 0 ? `${missing.join(" · ")}을(를) 먼저 채워주세요` : undefined}
-          onClick={() => toggle.mutate()}
-        >
-          {toggle.isPending ? "…" : live ? "내리기" : "공개"}
-        </Button>
+        <div className="flex items-center justify-end gap-1.5">
+          <Button
+            variant="secondary"
+            size="sm"
+            disabled={toggle.isPending || (!live && missing.length > 0)}
+            title={
+              !live && missing.length > 0 ? `${missing.join(" · ")}을(를) 먼저 채워주세요` : undefined
+            }
+            onClick={() => toggle.mutate()}
+          >
+            {toggle.isPending ? "…" : live ? "내리기" : "공개"}
+          </Button>
+
+          {confirming ? (
+            <>
+              <Button
+                variant="secondary"
+                size="sm"
+                className="text-paid"
+                disabled={remove.isPending}
+                onClick={() => remove.mutate()}
+              >
+                {remove.isPending ? "…" : "정말 지울까요"}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setConfirming(false);
+                  remove.reset();
+                }}
+              >
+                취소
+              </Button>
+            </>
+          ) : (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-ink-faint hover:text-paid"
+              onClick={() => setConfirming(true)}
+            >
+              삭제
+            </Button>
+          )}
+        </div>
+
+        {remove.isError && (
+          <p className="mt-1.5 text-right text-[12px] leading-snug text-paid">
+            {remove.error.message}
+          </p>
+        )}
       </Td>
     </tr>
   );

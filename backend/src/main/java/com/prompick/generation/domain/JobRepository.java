@@ -14,6 +14,9 @@ public interface JobRepository extends JpaRepository<GenerationJob, Long> {
 
     Optional<GenerationJob> findByUserIdAndIdempotencyKey(Long userId, String idempotencyKey);
 
+    /** 이 템플릿으로 만든 작업 수. 템플릿을 지워도 되는지 판단할 때 쓴다 */
+    long countByTemplateId(Long templateId);
+
     Optional<GenerationJob> findByIdAndUserId(Long id, Long userId);
 
     List<GenerationJob> findByUserIdOrderByIdDesc(Long userId, Limit limit);
