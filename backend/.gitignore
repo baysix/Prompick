@@ -41,5 +41,7 @@ out/
 .env
 .env.*
 !.env.example
-# 로컬 개발용 파일 저장소
-storage/
+# 로컬 개발용 파일 저장소.
+# 앞의 / 가 중요하다. 없으면 어느 깊이의 storage 폴더든 매칭되어,
+# src/main/java/com/prompick/storage 패키지까지 통째로 커밋에서 빠진다.
+/storage/

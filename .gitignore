@@ -4,8 +4,10 @@
 !.env.example
 !.env.local.example
 
-# 로컬 개발용 파일 저장소
-storage/
+# 로컬 개발용 파일 저장소.
+# 경로를 못박는다. 그냥 storage/ 라고 쓰면 어느 깊이든 매칭되어
+# backend/src/main/java/com/prompick/storage 패키지까지 커밋에서 빠진다.
+backend/storage/
 
 # OS
 Thumbs.db

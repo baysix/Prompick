@@ -10,7 +10,7 @@ build/
 .env
 .env.*
 
-# 로컬 저장소 구현이 파일을 쌓아두는 곳
-storage/
+# 로컬 저장소 구현이 파일을 쌓아두는 곳 (소스의 storage 패키지가 아니다)
+/storage/
 
 *.log
