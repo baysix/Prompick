@@ -26,6 +26,21 @@ public class AdminPipelineController {
         this.service = service;
     }
 
+    @GetMapping("/input-fields")
+    @io.swagger.v3.oas.annotations.Operation(
+            summary = "이 템플릿이 받는 입력 칸",
+            description = "프롬프트의 @이름에 무엇을 이을지 고를 목록")
+    public List<InputFieldOption> inputFields(@PathVariable Long templateId) {
+        return service.inputFieldsOf(templateId);
+    }
+
+    /**
+     * @param fieldKey 파이프라인 연결에 쓰는 이름
+     * @param label 관리자가 알아볼 이름
+     * @param isPhoto 사진 칸인지. 사진이 아닌 칸은 프롬프트 변수로 쓰인다
+     */
+    public record InputFieldOption(String fieldKey, String label, boolean isPhoto) {}
+
     @GetMapping
     @Operation(summary = "버전 목록", description = "단계별 사용 모델과 원가 합계를 함께 보여준다")
     public List<PipelineResponse> list(@PathVariable Long templateId) {

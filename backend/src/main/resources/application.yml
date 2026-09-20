@@ -115,6 +115,27 @@ prompick:
     # 다운로드 서명 URL 만료(초)
     signed-url-ttl-seconds: 300
 
+  ai:
+    # 제공사 키를 DB에 봉인할 때 쓰는 열쇠. base64로 인코딩한 32바이트.
+    # 이 값이 바뀌면 이미 저장된 키를 못 읽는다. 백업해 두고 함부로 바꾸지 않는다.
+    master-key: ${PROMPICK_MASTER_KEY:}
+
+    # 관리자 화면에 키를 넣기 전까지 쓰는 대비책. 화면에 넣은 값이 항상 우선한다.
+    keys:
+      OPENAI: ${OPENAI_API_KEY:}
+      ANTHROPIC: ${ANTHROPIC_API_KEY:}
+      GOOGLE: ${GOOGLE_API_KEY:}
+      XAI: ${XAI_API_KEY:}
+      BYTEDANCE: ${BYTEDANCE_API_KEY:}
+      HIGGSFIELD: ${HIGGSFIELD_API_KEY:}
+      RUNWAY: ${RUNWAY_API_KEY:}
+      KLING: ${KLING_API_KEY:}
+
+    openai:
+      base-url: ${OPENAI_BASE_URL:https://api.openai.com}
+      # 이미지 한 장에 1~3분까지 걸린다. 파이프라인 단계 제한(5분)보다 짧게 잡는다.
+      timeout-seconds: ${OPENAI_TIMEOUT_SECONDS:240}
+
   supabase:
     url: ${SUPABASE_URL:}
     # 서버 전용 키 (sb_secret_...). RLS를 우회하므로 절대 프론트엔드로 내보내지 않는다.

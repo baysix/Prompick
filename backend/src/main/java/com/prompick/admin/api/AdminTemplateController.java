@@ -41,6 +41,14 @@ public class AdminTemplateController {
         return service.list();
     }
 
+    @GetMapping("/by-slug/{slug}")
+    @Operation(
+            summary = "주소로 템플릿 찾기",
+            description = "서비스 화면에서 보던 템플릿을 바로 편집하러 갈 때 쓴다. 사용자 화면은 id를 모르고 주소만 안다")
+    public AdminTemplateResponse getBySlug(@PathVariable String slug) {
+        return service.getBySlug(slug);
+    }
+
     @GetMapping("/{id}")
     @Operation(summary = "템플릿 조회")
     public AdminTemplateResponse get(@PathVariable Long id) {

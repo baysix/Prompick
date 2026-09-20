@@ -166,10 +166,13 @@ public class PipelineExecutor {
 
         String prompt = fillVariables((String) def.get("prompt"), variables);
         Map<String, Object> params = castMap(def.get("params"));
-        Map<String, String> inputFiles = resolveInputs(castStringMap(def.get("inputs")), stepOutputs, job);
+        Map<String, String> resolved = resolveInputs(castStringMap(def.get("inputs")), stepOutputs, job);
 
-        String externalId = provider.submit(
-                new GenerationProvider.StepRequest(model.getModelKey(), prompt, params, inputFiles));
+        // 프롬프트의 @이름 표시를 모델이 읽을 말로 바꾸고, 사진을 부르는 차례대로 세운다.
+        PhotoReferences.Resolved photos = PhotoReferences.apply(prompt, resolved);
+
+        String externalId = provider.submit(new GenerationProvider.StepRequest(
+                model.getModelKey(), photos.prompt(), params, photos.files()));
 
         // 끝날 때까지 기다린다. 제한 시간을 두어 영원히 붙잡고 있지 않게 한다.
         Instant deadline = Instant.now().plus(STEP_TIMEOUT);
@@ -211,30 +214,40 @@ public class PipelineExecutor {
         return variables;
     }
 
-    /** 이 단계가 받을 파일들을 찾는다. 앞 단계 결과이거나 사용자가 올린 사진이다. */
+    /**
+     * 이 단계가 받을 파일들을 찾는다.
+     *
+     * <p>키는 지시문에 적힌 {@code @이름}이다. 값은 운영자가 적어둔 설명이거나
+     * {@code steps[0].output} 같은 앞 단계 참조다.
+     *
+     * <p>사용자가 올린 사진은 {@code @}를 뗀 이름으로 찾는다. 업로드 칸이 지시문의 표시에서
+     * 만들어지므로 둘은 항상 같은 이름을 쓴다 — 따로 이어줄 것이 없다.
+     */
     private Map<String, String> resolveInputs(
             Map<String, String> inputs, Map<String, String> stepOutputs, GenerationJob job) {
 
-        Map<String, String> resolved = new HashMap<>();
-        inputs.forEach((name, reference) -> {
-            Matcher stepMatch = STEP_REFERENCE.matcher(reference);
-            if (stepMatch.matches()) {
+        // 넣은 차례를 지킨다. 어느 사진이 몇 번째인지가 지시문의 뜻을 바꾼다.
+        Map<String, String> resolved = new java.util.LinkedHashMap<>();
+
+        inputs.forEach((token, reference) -> {
+            if (reference != null && STEP_REFERENCE.matcher(reference).matches()) {
                 String key = stepOutputs.get(reference);
                 if (key != null) {
-                    resolved.put(name, key);
+                    resolved.put(token, key);
                 }
                 return;
             }
 
-            // 입력 필드 이름이면 사용자가 올린 사진을 찾는다.
-            Object value = job.getInputs().get(reference);
-            Long uploadId = asLong(value);
+            String fieldKey = token.startsWith("@") ? token.substring(1) : token;
+            Long uploadId = asLong(job.getInputs().get(fieldKey));
+
             if (uploadId != null) {
-                uploads.findById(uploadId).ifPresent(u -> resolved.put(name, u.getStorageKey()));
+                uploads.findById(uploadId).ifPresent(u -> resolved.put(token, u.getStorageKey()));
             }
         });
         return resolved;
     }
+
 
     private String fillVariables(String template, Map<String, Object> variables) {
         if (template == null) return "";

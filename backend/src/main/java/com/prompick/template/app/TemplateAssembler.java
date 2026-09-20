@@ -36,6 +36,7 @@ public class TemplateAssembler {
                 media == null ? null : url(media.getThumbnailKey()),
                 t.getRequiredPhotoSummary(),
                 t.getRatio(),
+                media == null ? null : media.aspectRatio(),
                 t.getPromptAccess(),
                 t.getPromptCost(),
                 t.getGenerateAccess(),
@@ -59,7 +60,8 @@ public class TemplateAssembler {
                 t.getDescription(),
                 t.getContentType(),
                 categoryNameOf(t),
-                t.getCategory().getSlug(),
+                // 분류는 선택값이다. 없는 템플릿이 정상이므로 빈 문자열로 내려보낸다
+                t.getCategory() == null ? "" : t.getCategory().getSlug(),
                 List.copyOf(t.getTags()),
                 t.getMedia().stream()
                         .map(m -> new TemplateDetailResponse.MediaResponse(

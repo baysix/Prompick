@@ -30,6 +30,15 @@ public record JobResponse(
         Instant createdAt,
         Instant finishedAt) {
 
+    /**
+     * @param url 화면에 띄울 주소
+     * @param downloadUrl 파일로 저장할 주소. 브라우저가 새 탭에 띄우지 않게 표시가 붙어 있다
+     */
     public record OutputResponse(
-            Long id, ContentType mediaType, String url, boolean watermarked, Instant expiresAt) {}
+            Long id,
+            ContentType mediaType,
+            String url,
+            String downloadUrl,
+            boolean watermarked,
+            Instant expiresAt) {}
 }

@@ -37,6 +37,21 @@ public interface GenerationProvider {
     String resultContentType(String externalJobId);
 
     /**
+     * 키가 살아 있는지 확인한다.
+     *
+     * <p>운영자가 키를 넣고 나서 실제로 되는지 알 방법이 없으면, 사용자가 제작을 눌러 실패할 때에야
+     * 알게 된다. 그때는 이미 늦다. 돈이 들지 않는 호출로 미리 확인할 수 있게 한다.
+     */
+    default ProviderCheck check() {
+        return new ProviderCheck(false, "이 제공사는 연결 확인을 지원하지 않아요", java.util.List.of());
+    }
+
+    /**
+     * @param models 계정에서 쓸 수 있는 모델 이름. 파이프라인에 적은 이름이 여기 없으면 실패한다
+     */
+    record ProviderCheck(boolean ok, String message, java.util.List<String> models) {}
+
+    /**
      * 한 단계의 실행 요청.
      *
      * @param modelKey 제공사 안에서의 모델 이름

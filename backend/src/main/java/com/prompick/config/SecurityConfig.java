@@ -46,7 +46,10 @@ public class SecurityConfig {
                                 HttpMethod.GET,
                                 "/api/v1/home",
                                 "/api/v1/categories",
-                                "/api/v1/templates/**")
+                                "/api/v1/templates/**",
+                                // 요청 게시판은 구경만 하러 온 사람도 볼 수 있어야 한다.
+                                // 사람들이 무엇을 원하는지는 이 서비스가 무엇인지 보여주는 정보다.
+                                "/api/v1/requests")
                         .permitAll()
                         // 웹훅은 서명으로 검증한다. (포트원, AI 제공사)
                         .requestMatchers("/api/v1/webhooks/**")

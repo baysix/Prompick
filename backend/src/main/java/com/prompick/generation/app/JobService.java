@@ -1,6 +1,8 @@
 package com.prompick.generation.app;
 
 import com.prompick.common.error.ApiException;
+import com.prompick.credit.app.CreditService;
+import com.prompick.credit.domain.CreditReason;
 import com.prompick.common.error.ErrorCode;
 import com.prompick.config.PrompickProperties;
 import com.prompick.generation.domain.*;
@@ -29,6 +31,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class JobService {
 
+    private final CreditService credits;
+
     private static final Logger log = LoggerFactory.getLogger(JobService.class);
 
     private final JobRepository jobs;
@@ -38,13 +42,13 @@ public class JobService {
     private final FreeUsageService freeUsage;
     private final PrompickProperties properties;
 
-    public JobService(
-            JobRepository jobs,
+    public JobService(JobRepository jobs,
             TemplateRepository templates,
             TemplatePipelineRepository pipelines,
             UploadService uploads,
             FreeUsageService freeUsage,
-            PrompickProperties properties) {
+            PrompickProperties properties, CreditService credits) {
+        this.credits = credits;
         this.jobs = jobs;
         this.templates = templates;
         this.pipelines = pipelines;
@@ -126,12 +130,11 @@ public class JobService {
     /**
      * 유료 제작.
      *
-     * <p>프롬비 지갑은 5단계에서 붙인다. 그때까지는 유료 제작을 막아 둔다. 잔액 확인 없이
-     * 통과시키면 결제 기능이 붙는 순간 공짜로 만든 기록만 남는다.
+     * <p>지갑에서 바로 뺀다. 모자라면 여기서 막히므로 잔액 없이 작업이 만들어지는 일은 없다.
+     * 실패하면 {@code JobRefundService}가 같은 금액을 되돌린다.
      */
     private void chargePaid(User user, int cost) {
-        throw new ApiException(
-                ErrorCode.INSUFFICIENT_CREDIT, "유료 제작은 아직 열지 않았어요. 무료 템플릿을 먼저 써보세요.");
+        credits.spend(user.getId(), cost, CreditReason.GENERATE, "JOB", null);
     }
 
     /** 템플릿이 요구하는 입력이 다 왔는지, 올린 사진이 쓸 수 있는지 확인한다. */

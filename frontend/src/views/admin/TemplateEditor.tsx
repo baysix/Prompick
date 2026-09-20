@@ -7,293 +7,369 @@ import { adminApi, adminKeys } from "@/entities/admin/api/adminApi";
 import {
   EMPTY_TEMPLATE_FORM,
   toFormValues,
+  type AdminTemplate,
   type TemplateFormValues,
 } from "@/entities/admin/model/types";
-import { templateApi, templateKeys } from "@/entities/template/api/templateApi";
+import type { ContentType, GenerateAccess, PromptAccess } from "@/entities/template/model/types";
 import { ApiError } from "@/shared/api/client";
+import { cn } from "@/shared/lib/cn";
+import { Button } from "@/shared/ui/Button";
+import { Card, Field, Input, Select, Textarea, Toggle } from "@/widgets/admin-shell/Card";
 import { ExposureWarning } from "./ExposureWarning";
 import { MediaEditor } from "./MediaEditor";
 import { PipelineEditor } from "./PipelineEditor";
 import { PublicPromptEditor } from "./PublicPromptEditor";
 
 /**
- * 템플릿 편집기.
+ * 템플릿 편집.
  *
- * 프롬프트 제공 방식과 제작 방식을 따로 정한다. 이 조합이 이 서비스의 상품 구조 그 자체다.
+ * 한 템플릿에는 성격이 다른 네 덩어리가 붙는다 — 설명과 요금, 사용자에게 줄 프롬프트,
+ * 우리가 돌릴 파이프라인, 예시 결과물. 한 화면에 세로로 쌓으면 스크롤만 길어지고
+ * 무엇이 빠졌는지 안 보여서 탭으로 나눈다.
+ *
+ * 새 템플릿은 기본 정보부터 저장해야 한다. 나머지 셋은 모두 템플릿 id에 매달리기 때문이다.
  */
+type Tab = "basic" | "prompt" | "pipeline" | "media";
+
+/** 쓰는 결과물 비율 */
+const RATIOS = ["9:16", "2:3", "3:4", "4:5", "1:1", "16:9"];
+
 export function TemplateEditor({ templateId }: { templateId: number | null }) {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const isNew = templateId === null;
+  const [tab, setTab] = useState<Tab>("basic");
+  const [draft, setDraft] = useState<TemplateFormValues | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const { data: categories } = useQuery({
-    queryKey: templateKeys.categories(),
-    queryFn: () => templateApi.categories(),
-  });
-
-  const { data: existing } = useQuery({
+  const { data: template, isPending } = useQuery({
     queryKey: adminKeys.template(templateId ?? 0),
-    queryFn: () => adminApi.template(templateId!),
-    enabled: !isNew,
+    queryFn: () => adminApi.template(templateId as number),
+    enabled: templateId !== null,
   });
-
-  const [form, setForm] = useState<TemplateFormValues | null>(null);
-  const value = form ?? (existing ? toFormValues(existing) : EMPTY_TEMPLATE_FORM);
-
-  function set(patch: Partial<TemplateFormValues>) {
-    setForm({ ...value, ...patch });
-  }
 
   const save = useMutation({
-    mutationFn: () =>
-      isNew ? adminApi.createTemplate(value) : adminApi.updateTemplate(templateId, value),
-    onSuccess: (saved) => {
+    mutationFn: (form: TemplateFormValues) =>
+      templateId === null
+        ? adminApi.createTemplate(form)
+        : adminApi.updateTemplate(templateId, form),
+    onSuccess: (saved: AdminTemplate) => {
+      setDraft(null);
       setError(null);
-      setForm(null);
       void queryClient.invalidateQueries({ queryKey: adminKeys.templates() });
-      void queryClient.invalidateQueries({ queryKey: adminKeys.template(saved.id) });
-      if (isNew) router.replace(`/admin/templates/${saved.id}`);
+      if (templateId === null) router.replace(`/admin/templates/${saved.id}`);
+      else void queryClient.invalidateQueries({ queryKey: adminKeys.template(templateId) });
     },
-    onError: (e) => setError(e instanceof ApiError ? e.message : "저장하지 못했어요."),
+    onError: (e) =>
+      setError(e instanceof ApiError ? e.message : "저장하지 못했어요. 값을 확인해주세요."),
   });
 
-  const publish = useMutation({
-    mutationFn: () =>
-      existing?.status === "PUBLISHED"
-        ? adminApi.unpublish(templateId!)
-        : adminApi.publish(templateId!),
-    onSuccess: () => {
-      setError(null);
-      void queryClient.invalidateQueries({ queryKey: adminKeys.template(templateId!) });
-      void queryClient.invalidateQueries({ queryKey: adminKeys.templates() });
-    },
-    onError: (e) => setError(e instanceof ApiError ? e.message : "처리하지 못했어요."),
-  });
+  if (templateId !== null && isPending) {
+    return <p className="text-[13px] text-ink-faint">불러오는 중</p>;
+  }
 
-  const { promptAccess, generateAccess } = value;
+  const form = draft ?? (template ? toFormValues(template) : EMPTY_TEMPLATE_FORM);
+  const set = (patch: Partial<TemplateFormValues>) => setDraft({ ...form, ...patch });
+
+  const TABS: { key: Tab; label: string; ready?: boolean }[] = [
+    { key: "basic", label: "기본 정보" },
+    { key: "prompt", label: "공개 프롬프트", ready: template?.hasPublicPrompt },
+    { key: "pipeline", label: "파이프라인", ready: template?.hasActivePipeline },
+    { key: "media", label: "예시", ready: (template?.mediaCount ?? 0) > 0 },
+  ];
 
   return (
-    <div className="mx-auto max-w-3xl space-y-8">
-      <header className="flex items-center justify-between gap-3">
-        <h2 className="text-[18px] font-semibold text-ink">
-          {isNew ? "새 템플릿" : existing?.title}
-        </h2>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => save.mutate()}
-            disabled={save.isPending}
-            className="bg-brand rounded-full px-3.5 py-1.5 text-[13px] font-semibold text-accent-ink disabled:opacity-40"
-          >
-            {save.isPending ? "저장 중" : "저장"}
-          </button>
-          {!isNew && (
+    <div className="max-w-4xl space-y-5">
+      {template && (
+        <ExposureWarning
+          template={template}
+          templateId={tab === "basic" ? null : template.id}
+        />
+      )}
+
+      <nav className="flex gap-1 border-b border-line">
+        {TABS.map((t) => {
+          const locked = templateId === null && t.key !== "basic";
+          return (
             <button
+              key={t.key}
               type="button"
-              onClick={() => publish.mutate()}
-              className="rounded-full border border-line px-3.5 py-1.5 text-[13px] text-ink"
+              disabled={locked}
+              onClick={() => setTab(t.key)}
+              title={locked ? "기본 정보를 먼저 저장해주세요" : undefined}
+              className={cn(
+                "-mb-px flex items-center gap-1.5 border-b-2 px-3.5 py-2.5 text-[14px] transition-colors",
+                tab === t.key
+                  ? "border-accent font-semibold text-ink"
+                  : "border-transparent text-ink-soft hover:text-ink",
+                locked && "opacity-40",
+              )}
             >
-              {existing?.status === "PUBLISHED" ? "내리기" : "게시하기"}
+              {t.label}
+              {t.key !== "basic" && !locked && (
+                <span
+                  className={cn("h-1.5 w-1.5 rounded-full", t.ready ? "bg-accent" : "bg-paid")}
+                  aria-label={t.ready ? "채워짐" : "비어 있음"}
+                />
+              )}
             </button>
-          )}
-        </div>
-      </header>
+          );
+        })}
+      </nav>
 
-      {error && (
-        <p className="border-l-2 border-[#ff6b6b] pl-3 text-[13px] text-[#ff6b6b]">{error}</p>
+      {tab === "basic" && (
+        <BasicForm
+          form={form}
+          set={set}
+          dirty={draft !== null}
+          saving={save.isPending}
+          error={error}
+          onSave={() => save.mutate(form)}
+        />
       )}
 
-      <ExposureWarning value={value} />
-
-      <section className="space-y-4">
-        <h2 className="text-[16px] font-semibold text-ink">기본 정보</h2>
-
-        <Field label="제목">
-          <input
-            value={value.title}
-            onChange={(e) => set({ title: e.target.value })}
-            placeholder="공중에 뜬 제품 광고"
-            className={inputClass}
-          />
-        </Field>
-
-        <Field label="주소" hint="영문 소문자와 하이픈만. 나중에 바꾸면 기존 링크가 깨져요">
-          <input
-            value={value.slug}
-            onChange={(e) => set({ slug: e.target.value })}
-            placeholder="floating-product-ad"
-            className={`${inputClass} font-mono`}
-          />
-        </Field>
-
-        <Field label="설명">
-          <textarea
-            value={value.description}
-            onChange={(e) => set({ description: e.target.value })}
-            rows={2}
-            className={inputClass}
-          />
-        </Field>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="종류">
-            <select
-              value={value.contentType}
-              onChange={(e) => set({ contentType: e.target.value as TemplateFormValues["contentType"] })}
-              className={inputClass}
-            >
-              <option value="VIDEO">영상</option>
-              <option value="IMAGE">이미지</option>
-            </select>
-          </Field>
-
-          <Field label="주제">
-            <select
-              value={value.categorySlug}
-              onChange={(e) => set({ categorySlug: e.target.value })}
-              className={inputClass}
-            >
-              <option value="">고르기</option>
-              {categories?.map((c) => (
-                <option key={c.slug} value={c.slug}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </Field>
-        </div>
-      </section>
-
-      <section className="space-y-4">
-        <div>
-          <h2 className="text-[16px] font-semibold text-ink">어떻게 팔까요</h2>
-          <p className="mt-0.5 text-[12px] text-ink-soft">
-            프롬프트 제공과 자동 제작은 별개예요. 각각 따로 정해요.
-          </p>
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="프롬프트 제공">
-            <select
-              value={promptAccess}
-              onChange={(e) => set({ promptAccess: e.target.value as TemplateFormValues["promptAccess"] })}
-              className={inputClass}
-            >
-              <option value="HIDDEN">제공하지 않음 (여기서만 제작)</option>
-              <option value="FREE">로그인하면 공개</option>
-              <option value="PAID">프롬비를 내면 공개</option>
-            </select>
-            {promptAccess === "PAID" && (
-              <input
-                type="number"
-                min={1}
-                value={value.promptCost}
-                onChange={(e) => set({ promptCost: Number(e.target.value) })}
-                className={`${inputClass} mt-2`}
-              />
-            )}
-          </Field>
-
-          <Field label="자동 제작">
-            <select
-              value={generateAccess}
-              onChange={(e) => set({ generateAccess: e.target.value as TemplateFormValues["generateAccess"] })}
-              className={inputClass}
-            >
-              <option value="PAID">프롬비를 내고 제작</option>
-              <option value="FREE">하루 무료 횟수로 제작</option>
-            </select>
-            {generateAccess === "PAID" && (
-              <input
-                type="number"
-                min={1}
-                value={value.generateCost}
-                onChange={(e) => set({ generateCost: Number(e.target.value) })}
-                className={`${inputClass} mt-2`}
-              />
-            )}
-          </Field>
-        </div>
-      </section>
-
-      <section className="space-y-4">
-        <h2 className="text-[16px] font-semibold text-ink">결과물</h2>
-        <div className="grid gap-4 sm:grid-cols-3">
-          <Field label="비율">
-            <select
-              value={value.ratio}
-              onChange={(e) => set({ ratio: e.target.value })}
-              className={inputClass}
-            >
-              <option value="9:16">9:16 세로</option>
-              <option value="1:1">1:1 정사각</option>
-              <option value="16:9">16:9 가로</option>
-            </select>
-          </Field>
-          <Field label="길이(초)">
-            <input
-              type="number"
-              value={value.durationSeconds ?? ""}
-              onChange={(e) =>
-                set({ durationSeconds: e.target.value ? Number(e.target.value) : null })
-              }
-              className={inputClass}
-            />
-          </Field>
-          <Field label="예상 소요(초)">
-            <input
-              type="number"
-              value={value.estimatedSeconds}
-              onChange={(e) => set({ estimatedSeconds: Number(e.target.value) })}
-              className={inputClass}
-            />
-          </Field>
-        </div>
-
-        <Field label="필요한 사진" hint="카드와 상세에 그대로 보여요">
-          <input
-            value={value.requiredPhotoSummary}
-            onChange={(e) => set({ requiredPhotoSummary: e.target.value })}
-            placeholder="제품 사진 1장"
-            className={inputClass}
-          />
-        </Field>
-      </section>
-
-      {!isNew && (
-        <>
-          <MediaEditor templateId={templateId} />
-          {promptAccess !== "HIDDEN" && <PublicPromptEditor templateId={templateId} />}
-          <PipelineEditor templateId={templateId} />
-        </>
+      {tab === "prompt" && templateId !== null && (
+        <PublicPromptEditor templateId={templateId} promptAccess={form.promptAccess} />
       )}
 
-      {isNew && (
-        <p className="border-l-2 border-line pl-3 text-[13px] text-ink-soft">
-          먼저 저장하면 프롬프트 원문과 제작 방법을 등록할 수 있어요.
-        </p>
-      )}
+      {tab === "pipeline" && templateId !== null && <PipelineEditor templateId={templateId} />}
+
+      {tab === "media" && templateId !== null && <MediaEditor templateId={templateId} />}
     </div>
   );
 }
 
-const inputClass = "w-full border border-line bg-surface px-2.5 py-1.5 text-[13px] text-ink";
-
-function Field({
-  label,
-  hint,
-  children,
+function BasicForm({
+  form,
+  set,
+  dirty,
+  saving,
+  error,
+  onSave,
 }: {
-  label: string;
-  hint?: string;
-  children: React.ReactNode;
+  form: TemplateFormValues;
+  set: (patch: Partial<TemplateFormValues>) => void;
+  dirty: boolean;
+  saving: boolean;
+  error: string | null;
+  onSave: () => void;
 }) {
+  const isVideo = form.contentType === "VIDEO";
+
   return (
-    <div className="space-y-1">
-      <label className="block text-[12px] text-ink-soft">{label}</label>
-      {children}
-      {hint && <p className="text-[11px] text-ink-faint">{hint}</p>}
+    <div className="space-y-5">
+      <Card
+        title="무엇을 만드는 템플릿인가"
+        actions={
+          <Button size="sm" disabled={saving || !dirty} onClick={onSave}>
+            {saving ? "저장 중" : "저장"}
+          </Button>
+        }
+      >
+        <div className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="제목" required hint="사용자가 목록에서 읽는 이름">
+              <Input value={form.title} onChange={(e) => set({ title: e.target.value })} />
+            </Field>
+
+            <Field label="주소" required hint="/t/여기 — 공개한 뒤에는 바꾸지 마세요">
+              <Input
+                value={form.slug}
+                onChange={(e) => set({ slug: e.target.value.replace(/[^a-z0-9-]/g, "") })}
+                className="font-mono"
+                placeholder="retro-film-portrait"
+              />
+            </Field>
+          </div>
+
+          <Field label="설명" hint="어떤 느낌의 결과가 나오는지 한두 줄로">
+            <Textarea
+              value={form.description}
+              onChange={(e) => set({ description: e.target.value })}
+              rows={2}
+            />
+          </Field>
+
+          <div className="grid gap-4 sm:grid-cols-3">
+            <Field label="종류" required>
+              <Select
+                value={form.contentType}
+                onChange={(e) => set({ contentType: e.target.value as ContentType })}
+              >
+                <option value="VIDEO">영상</option>
+                <option value="IMAGE">이미지</option>
+              </Select>
+            </Field>
+
+            <Field label="비율">
+              <Select value={form.ratio} onChange={(e) => set({ ratio: e.target.value })}>
+                {/*
+                  목록에 없는 비율을 가진 템플릿을 이 폼으로 열어 저장하면 원래 값이 조용히
+                  덮인다. 실제로 그 일이 한 번 일어났으므로, 쓰는 비율은 빠짐없이 둔다.
+                */}
+                {RATIOS.map((r) => (
+                  <option key={r} value={r}>
+                    {r}
+                  </option>
+                ))}
+                {!RATIOS.includes(form.ratio) && form.ratio && (
+                  // 목록에 없는 값이 이미 들어 있으면 그대로 보여준다. 모르는 값을 감추면
+                  // 저장하는 순간 사라진다.
+                  <option value={form.ratio}>{form.ratio}</option>
+                )}
+              </Select>
+            </Field>
+
+            <Field label="예상 소요" hint="초. 사용자에게 대기 시간으로 보여요">
+              <Input
+                type="number"
+                value={form.estimatedSeconds}
+                onChange={(e) => set({ estimatedSeconds: Number(e.target.value) })}
+              />
+            </Field>
+          </div>
+
+          {isVideo && (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="길이" hint="초">
+                <Input
+                  type="number"
+                  value={form.durationSeconds ?? ""}
+                  onChange={(e) =>
+                    set({ durationSeconds: e.target.value ? Number(e.target.value) : null })
+                  }
+                />
+              </Field>
+              <Field label="해상도">
+                <Input
+                  value={form.resolution ?? ""}
+                  onChange={(e) => set({ resolution: e.target.value || null })}
+                  className="font-mono"
+                  placeholder="1080x1920"
+                />
+              </Field>
+            </div>
+          )}
+        </div>
+      </Card>
+
+      <Card
+        title="요금"
+        description="프롬프트를 받아 가는 것과 대신 만들어 주는 것은 따로 값을 매겨요. 하나만 열어도 돼요."
+      >
+        <div className="grid gap-5 sm:grid-cols-2">
+          <div>
+            <Field label="프롬프트 원문">
+              <Select
+                value={form.promptAccess}
+                onChange={(e) => set({ promptAccess: e.target.value as PromptAccess })}
+              >
+                <option value="HIDDEN">공개하지 않음</option>
+                <option value="FREE">누구나 무료로</option>
+                <option value="PAID">프롬비를 받고</option>
+              </Select>
+            </Field>
+            {form.promptAccess === "PAID" && (
+              <div className="mt-3">
+                <Field label="프롬비">
+                  <Input
+                    type="number"
+                    value={form.promptCost}
+                    onChange={(e) => set({ promptCost: Number(e.target.value) })}
+                    className="font-mono"
+                  />
+                </Field>
+              </div>
+            )}
+          </div>
+
+          <div>
+            <Field label="대신 만들어 주기">
+              <Select
+                value={form.generateAccess}
+                onChange={(e) => set({ generateAccess: e.target.value as GenerateAccess })}
+              >
+                <option value="PAID">프롬비를 받고</option>
+                <option value="FREE">무료로 (하루 횟수 제한)</option>
+              </Select>
+            </Field>
+            {form.generateAccess === "PAID" && (
+              <div className="mt-3">
+                <Field label="프롬비" hint="파이프라인 원가보다 높게 잡아야 남아요">
+                  <Input
+                    type="number"
+                    value={form.generateCost}
+                    onChange={(e) => set({ generateCost: Number(e.target.value) })}
+                    className="font-mono"
+                  />
+                </Field>
+              </div>
+            )}
+          </div>
+        </div>
+      </Card>
+
+      <Card
+        title="사진 안내"
+        description="어떤 사진을 올려야 잘 나오는지 미리 알려주면 실패와 환불 문의가 크게 줄어요."
+      >
+        <div className="space-y-4">
+          <Field label="한 줄 요약" hint="목록과 상세에서 먼저 보여요">
+            <Input
+              value={form.requiredPhotoSummary}
+              onChange={(e) => set({ requiredPhotoSummary: e.target.value })}
+              placeholder="정면 얼굴 사진 한 장"
+            />
+          </Field>
+
+          <Field label="확인할 것" hint="한 줄에 하나씩. 업로드 화면에 체크리스트로 보여요">
+            <Textarea
+              value={(form.uploadGuide.checklist ?? []).join("\n")}
+              onChange={(e) =>
+                set({
+                  uploadGuide: {
+                    ...form.uploadGuide,
+                    checklist: e.target.value.split("\n").filter((line) => line.trim() !== ""),
+                  },
+                })
+              }
+              rows={4}
+              placeholder={"얼굴이 정면으로 나온 사진\n너무 어둡지 않은 사진"}
+            />
+          </Field>
+
+          <Field label="결과 안내" hint="결과가 어떻게 달라질 수 있는지 미리 말해두는 자리">
+            <Input
+              value={form.uploadGuide.resultNote ?? ""}
+              onChange={(e) =>
+                set({ uploadGuide: { ...form.uploadGuide, resultNote: e.target.value } })
+              }
+              placeholder="사진에 따라 분위기가 조금씩 달라져요."
+            />
+          </Field>
+
+          <Field label="태그" hint="쉼표로 구분. 검색에 쓰여요">
+            <Input
+              value={form.tags.join(", ")}
+              onChange={(e) =>
+                set({
+                  tags: e.target.value
+                    .split(",")
+                    .map((t) => t.trim())
+                    .filter(Boolean),
+                })
+              }
+            />
+          </Field>
+
+          <Toggle
+            checked={form.pinned}
+            onChange={(pinned) => set({ pinned })}
+            label="홈 위쪽에 고정"
+          />
+        </div>
+      </Card>
+
+      {error && <p className="text-[13px] text-paid">{error}</p>}
     </div>
   );
 }

@@ -1,7 +1,6 @@
-import Link from "next/link";
 import type { Metadata } from "next";
 import { templateApi } from "@/entities/template/api/templateApi";
-import { TemplateFrame } from "@/entities/template/ui/TemplateFrame";
+import { TemplateTile } from "@/entities/template/ui/TemplateTile";
 import type { TemplateCard } from "@/entities/template/model/types";
 import { EmptyState, PageShell } from "@/widgets/page-shell/PageShell";
 
@@ -39,29 +38,22 @@ export default async function GalleryPage() {
       wide
     >
       {unique.length === 0 ? (
-        <EmptyState
-          title="아직 올라온 결과물이 없어요"
-          body="첫 번째로 만들어서 올려보세요."
-          action={
-            <Link
-              href="/explore"
-              className="bg-brand inline-block rounded-full px-4 py-2 text-[14px] font-semibold text-accent-ink"
-            >
-              템플릿 둘러보기
-            </Link>
-          }
-        />
+        <EmptyState title="아직 올라온 결과물이 없어요" body="첫 번째로 만들어서 올려보세요." />
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-7 sm:grid-cols-3 lg:grid-cols-5">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             {unique.map((template, i) => (
-              <TemplateFrame key={template.slug} template={template} priority={i < 8} />
+              <TemplateTile
+                key={template.slug}
+                template={template}
+                priority={i < 8}
+              />
             ))}
           </div>
 
-          <div className="mt-10 rounded-2xl border border-line bg-surface px-6 py-7 text-center">
+          <div className="mt-10 rounded-2xl border border-line px-6 py-8 text-center">
             <p className="text-[15px] font-semibold text-ink">내가 만든 것도 여기 올릴 수 있어요</p>
-            <p className="mx-auto mt-1.5 max-w-md text-[13px] leading-relaxed text-ink-soft">
+            <p className="mx-auto mt-2 max-w-md text-[13px] leading-relaxed text-ink-soft">
               만든 결과물을 공개하면 갤러리에 올라가요. 올린 사람은 다른 사람이 따라 만들 때마다
               알 수 있어요. 공개 여부는 언제든 바꿀 수 있어요.
             </p>

@@ -89,6 +89,22 @@ public class JobQueryService {
         return templates.findById(job.getTemplateId()).orElse(null);
     }
 
+    /**
+     * 저장될 파일 이름.
+     *
+     * <p>스토리지 키는 UUID라 사람이 보면 무엇인지 알 수 없다. 받은 뒤 폴더에서 찾을 수 있게
+     * 템플릿 이름을 붙여준다.
+     */
+    private static String downloadNameFor(Template template, String storageKey) {
+        String extension = storageKey.contains(".")
+                ? storageKey.substring(storageKey.lastIndexOf('.'))
+                : ".png";
+
+        String title = template == null ? "프롬픽" : template.getTitle();
+        // 파일 이름에 쓸 수 없는 글자를 걷어낸다.
+        return title.replaceAll("[\\/:*?\"<>|]", "").trim() + extension;
+    }
+
     private JobResponse toResponse(GenerationJob job, Template template) {
         List<JobResponse.OutputResponse> outputResponses =
                 job.getStatus() == JobStatus.SUCCEEDED
@@ -98,6 +114,10 @@ public class JobQueryService {
                                         o.getMediaType(),
                                         // 결과물은 비공개 버킷에 있다. 짧은 만료의 서명 주소로만 준다.
                                         storage.presignDownload(o.getStorageKey(), signedUrlTtl),
+                                        storage.presignDownload(
+                                                o.getStorageKey(),
+                                                signedUrlTtl,
+                                                downloadNameFor(template, o.getStorageKey())),
                                         o.isWatermarked(),
                                         o.getExpiresAt()))
                                 .toList()

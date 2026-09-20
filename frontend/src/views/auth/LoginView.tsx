@@ -4,9 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { api, ApiError } from "@/shared/api/client";
 import { supabase } from "@/shared/auth/supabase";
-import { cn } from "@/shared/lib/cn";
-
-type Mode = "signin" | "signup";
+import { Button } from "@/shared/ui/Button";
 
 /**
  * 로그인과 가입.
@@ -16,10 +14,9 @@ type Mode = "signin" | "signup";
  */
 export function LoginView() {
   const router = useRouter();
-  const params = useSearchParams();
-  const next = params.get("next") ?? "/";
+  const next = useSearchParams().get("next") ?? "/";
 
-  const [mode, setMode] = useState<Mode>("signin");
+  const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [nickname, setNickname] = useState("");
@@ -57,89 +54,70 @@ export function LoginView() {
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center px-4 py-16">
-      <h1 className="text-[22px] font-semibold tracking-tight text-ink">
-        {mode === "signin" ? "다시 오셨네요" : "프롬픽 시작하기"}
-      </h1>
-      <p className="mt-1.5 text-[13px] leading-relaxed text-ink-soft">
-        {mode === "signin"
-          ? "프롬프트를 받아 가거나 사진을 맡기려면 로그인이 필요해요."
-          : "가입하면 무료 템플릿으로 바로 만들어 볼 수 있어요."}
-      </p>
+    <main className="flex w-full flex-1 items-center justify-center px-4 py-16">
+      <div className="w-full max-w-sm">
+        <h1 className="text-[26px] font-bold tracking-[-0.04em] text-ink">
+          {mode === "signin" ? "다시 오셨네요" : "프롬픽 시작하기"}
+        </h1>
+        <p className="mt-2 text-[14px] leading-relaxed text-ink-soft">
+          {mode === "signin"
+            ? "프롬프트를 받아 가거나 사진을 맡기려면 로그인이 필요해요."
+            : "가입하면 무료 템플릿으로 바로 만들어 볼 수 있어요."}
+        </p>
 
-      <form onSubmit={submit} className="mt-7 space-y-3">
-        {mode === "signup" && (
-          <Input
-            label="닉네임"
-            value={nickname}
-            onChange={setNickname}
-            placeholder="2~20자"
-            autoComplete="nickname"
+        <form onSubmit={submit} className="mt-7 space-y-3">
+          {mode === "signup" && (
+            <Field label="닉네임" value={nickname} onChange={setNickname} placeholder="2~20자" />
+          )}
+          <Field label="이메일" type="email" value={email} onChange={setEmail} required />
+          <Field
+            label="비밀번호"
+            type="password"
+            value={password}
+            onChange={setPassword}
+            placeholder={mode === "signup" ? "8자 이상" : undefined}
+            required
           />
-        )}
 
-        <Input
-          label="이메일"
-          type="email"
-          value={email}
-          onChange={setEmail}
-          autoComplete="email"
-          required
-        />
+          {error && (
+            <p className="rounded-xl bg-[#3a1d1d] px-3.5 py-2.5 text-[13px] leading-relaxed text-[#ff9b9b]">
+              {error}
+            </p>
+          )}
 
-        <Input
-          label="비밀번호"
-          type="password"
-          value={password}
-          onChange={setPassword}
-          placeholder={mode === "signup" ? "8자 이상" : undefined}
-          autoComplete={mode === "signup" ? "new-password" : "current-password"}
-          required
-        />
+          <Button type="submit" size="lg" disabled={busy} className="w-full">
+            {busy ? "잠시만요" : mode === "signin" ? "로그인" : "가입하고 시작하기"}
+          </Button>
+        </form>
 
-        {error && (
-          <p className="border-l-2 border-[#ff6b6b] pl-2.5 text-[13px] leading-relaxed text-[#ff6b6b]">
-            {error}
-          </p>
-        )}
+        <p className="mt-5 text-center text-[13px] text-ink-soft">
+          {mode === "signin" ? "처음이신가요?" : "이미 계정이 있나요?"}{" "}
+          <button
+            type="button"
+            onClick={() => {
+              setMode(mode === "signin" ? "signup" : "signin");
+              setError(null);
+            }}
+            className="font-semibold text-accent"
+          >
+            {mode === "signin" ? "가입하기" : "로그인"}
+          </button>
+        </p>
 
-        <button
-          type="submit"
-          disabled={busy}
-          className="w-full rounded-sm bg-accent py-2.5 text-[14px] font-medium text-accent-ink disabled:opacity-40"
-        >
-          {busy ? "잠시만요" : mode === "signin" ? "로그인" : "가입하고 시작하기"}
-        </button>
-      </form>
-
-      <p className="mt-5 text-center text-[13px] text-ink-soft">
-        {mode === "signin" ? "처음이신가요?" : "이미 계정이 있나요?"}{" "}
-        <button
-          type="button"
-          onClick={() => {
-            setMode(mode === "signin" ? "signup" : "signin");
-            setError(null);
-          }}
-          className="text-ink underline"
-        >
-          {mode === "signin" ? "가입하기" : "로그인"}
-        </button>
-      </p>
-
-      <p className="mt-10 text-center text-[12px] leading-relaxed text-ink-faint">
-        카카오·구글 로그인은 준비 중이에요.
-      </p>
+        <p className="mt-10 text-center text-[12px] text-ink-faint">
+          카카오·구글 로그인은 준비 중이에요.
+        </p>
+      </div>
     </main>
   );
 }
 
-function Input({
+function Field({
   label,
   value,
   onChange,
   type = "text",
   placeholder,
-  autoComplete,
   required,
 }: {
   label: string;
@@ -147,23 +125,18 @@ function Input({
   onChange: (v: string) => void;
   type?: string;
   placeholder?: string;
-  autoComplete?: string;
   required?: boolean;
 }) {
   return (
-    <label className="block space-y-1">
+    <label className="block space-y-1.5">
       <span className="text-[12px] text-ink-soft">{label}</span>
       <input
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        autoComplete={autoComplete}
         required={required}
-        className={cn(
-          "w-full border border-line bg-surface px-3 py-2.5 text-[14px] text-ink",
-          "placeholder:text-ink-faint",
-        )}
+        className="w-full rounded-xl bg-surface px-3.5 py-3 text-[14px] text-ink outline-none placeholder:text-ink-faint"
       />
     </label>
   );

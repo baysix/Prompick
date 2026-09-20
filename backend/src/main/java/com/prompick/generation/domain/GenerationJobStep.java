@@ -98,6 +98,19 @@ public class GenerationJobStep {
         return externalJobId;
     }
 
+    /** 실패 원문. 관리자만 본다 — 모델 이름이나 내부 사정이 섞여 있을 수 있다 */
+    public String getErrorDetail() {
+        return errorDetail;
+    }
+
+    public java.time.Instant getStartedAt() {
+        return startedAt;
+    }
+
+    public java.time.Instant getFinishedAt() {
+        return finishedAt;
+    }
+
     public String getOutputStorageKey() {
         return outputStorageKey;
     }

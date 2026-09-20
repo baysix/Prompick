@@ -21,7 +21,15 @@ export interface TemplateCard {
   previewUrl: string | null;
   thumbnailUrl: string | null;
   requiredPhotoSummary: string | null;
+  /** 템플릿이 만들어내는 결과물의 비율 (예: "9:16") */
   ratio: string;
+  /**
+   * 예시 그림의 실제 비율 (예: "281 / 352").
+   *
+   * 목록에서 타일 자리를 이 값으로 잡는다. 운영자가 올린 그림이 잘리지 않게 하려는 것이다.
+   * 크기를 읽지 못한 예시는 null이고, 그때는 ratio로 대신한다.
+   */
+  mediaRatio: string | null;
   promptAccess: PromptAccess;
   promptCost: number;
   generateAccess: GenerateAccess;

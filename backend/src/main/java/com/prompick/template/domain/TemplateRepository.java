@@ -20,6 +20,13 @@ public interface TemplateRepository extends JpaRepository<Template, Long> {
     Optional<Template> findPublishedBySlug(@Param("slug") String slug);
 
     /**
+     * 공개 여부를 가리지 않고 주소로 찾는다.
+     *
+     * <p>관리자 전용이다. 작성 중이거나 숨긴 템플릿도 찾아야 하므로 공개 조건을 걸지 않는다.
+     */
+    Optional<Template> findBySlug(String slug);
+
+    /**
      * 목록 조회. 커서는 (정렬키, id) 쌍으로 동작한다.
      *
      * <p>파이프라인은 어떤 경로로도 조인되지 않는다. Template 엔티티에 연관관계 자체가 없다.

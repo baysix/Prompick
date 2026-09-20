@@ -1,6 +1,7 @@
 package com.prompick.config;
 
 import java.util.List;
+import java.util.Map;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
@@ -16,6 +17,7 @@ public record PrompickProperties(
         Upload upload,
         Storage storage,
         Supabase supabase,
+        Ai ai,
         Cors cors) {
 
     /** 재화(프롬비) 설정 */
@@ -90,6 +92,26 @@ public record PrompickProperties(
         }
 
         public record StorageBuckets(String uploadBucket, String outputBucket, String publicBucket) {}
+    }
+
+    /**
+     * 외부 AI 제공사 연동 설정.
+     *
+     * <p>키는 환경변수로만 넣는다. 저장소에 올라가면 그 키는 이미 유출된 것으로 봐야 한다.
+     */
+    public record Ai(
+            /** 제공사 키를 봉인할 마스터 키. base64로 인코딩한 32바이트 */
+            String masterKey,
+            /**
+             * 환경변수로 직접 넣은 제공사 키.
+             *
+             * <p>관리자 화면에서 넣은 값이 우선이고, 여기는 아직 화면에 넣지 않았을 때의 대비책이다.
+             * 로컬 개발이나, DB가 비어 있는 첫 배포에서 쓴다.
+             */
+            Map<String, String> keys,
+            OpenAi openai) {
+
+        public record OpenAi(String baseUrl, int timeoutSeconds) {}
     }
 
     public record Cors(List<String> allowedOrigins) {}

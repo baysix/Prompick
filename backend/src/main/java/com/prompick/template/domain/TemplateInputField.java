@@ -54,6 +54,35 @@ public class TemplateInputField {
 
     protected TemplateInputField() {}
 
+    /**
+     * 프롬프트의 {@code @이름}에서 만들어지는 사진 칸.
+     *
+     * <p>운영자가 따로 만들지 않는다. 지시문에 사진을 부르면 그 순간 필요한 칸이 정해지므로,
+     * 같은 것을 두 군데에 적게 하면 어긋날 자리만 생긴다.
+     */
+    public static TemplateInputField photoFor(
+            Long templateId, String fieldKey, String label, String helpText, int sortOrder) {
+
+        TemplateInputField field = new TemplateInputField();
+        field.templateId = templateId;
+        field.fieldKey = fieldKey;
+        field.fieldType = FieldType.IMAGE;
+        field.label = label;
+        field.helpText = helpText;
+        field.required = true;
+        field.options = List.of();
+        field.validation = Map.of("minWidth", 200, "minHeight", 200);
+        field.sortOrder = sortOrder;
+        return field;
+    }
+
+    /** 설명만 고친다. 칸 자체는 그대로 두어 이미 만들어진 작업이 가리키는 이름이 살아 있게 한다 */
+    public void describe(String label, String helpText, int sortOrder) {
+        this.label = label;
+        this.helpText = helpText;
+        this.sortOrder = sortOrder;
+    }
+
     public Long getId() {
         return id;
     }

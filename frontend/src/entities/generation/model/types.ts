@@ -7,6 +7,8 @@ export interface JobOutput {
   mediaType: ContentType;
   /** 짧은 만료의 서명 주소. 화면에 바로 쓸 수 있다 */
   url: string;
+  /** 파일로 저장되는 주소. 브라우저가 새 탭에 띄우지 않게 표시가 붙어 있다 */
+  downloadUrl: string;
   watermarked: boolean;
   expiresAt: string | null;
 }

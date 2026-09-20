@@ -32,6 +32,14 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class UploadService {
 
+    /**
+     * 이보다 짧은 변을 가진 사진은 결과가 흐릿해질 수 있다.
+     *
+     * <p>막는 기준이 아니라 알려주는 기준이다. 실제로 만들어지기는 하고, 얼마나 아쉬울지는
+     * 사진마다 다르다. 판단은 올린 사람이 한다.
+     */
+    private static final int COMFORTABLE_EDGE = 512;
+
     private static final Logger log = LoggerFactory.getLogger(UploadService.class);
 
     /** 제작에 쓰이지 않은 업로드를 정리하기까지의 기간 */
@@ -119,14 +127,31 @@ public class UploadService {
         if (width != null && height != null) {
             boolean tooSmall =
                     (minWidth != null && width < minWidth) || (minHeight != null && height < minHeight);
+
             if (tooSmall) {
                 status = Upload.CheckStatus.BLOCKED;
-                result.put("resolution", "사진이 너무 작아요. 더 큰 사진을 올려주세요");
+                // 얼마나 모자란지 알려준다. "너무 작아요"만으로는 무엇을 다시 올려야 할지 알 수 없다.
+                result.put(
+                        "resolution",
+                        "사진이 %d×%d이라 조금 작아요. %d×%d 이상이면 돼요"
+                                .formatted(width, height, orZero(minWidth), orZero(minHeight)));
+
+            } else if (Math.min(width, height) < COMFORTABLE_EDGE) {
+                // 막지는 않는다. 만들어지기는 하는데 결과가 흐릿할 수 있다는 것만 알려준다.
+                // 되는 것을 못 하게 막는 것보다, 되지만 아쉬울 수 있다고 말해주는 쪽이 낫다.
+                result.put(
+                        "resolutionNote",
+                        "사진이 %d×%d예요. 만들 수는 있지만 더 큰 사진일수록 얼굴이 또렷하게 나와요"
+                                .formatted(width, height));
             }
         }
 
         upload.recordCheck(status, result, (long) bytes.length, width, height);
         return new CheckResult(upload.getId(), status, result);
+    }
+
+    private static int orZero(Integer value) {
+        return value == null ? 0 : value;
     }
 
     /** 제작에 쓸 수 있는 업로드인지 확인하고 가져온다. */

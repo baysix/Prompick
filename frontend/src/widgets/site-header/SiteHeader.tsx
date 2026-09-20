@@ -3,19 +3,21 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
-import { SERVICE } from "@/shared/config/env";
+import { useSession } from "@/shared/auth/SessionProvider";
 import { cn } from "@/shared/lib/cn";
-import { UserMenu } from "./UserMenu";
+import { ButtonLink } from "@/shared/ui/Button";
 
 /**
  * 상단바.
  *
- * 영상이냐 이미지냐를 맨 앞에 둔다. 이 서비스에서 이후 행동이 완전히 갈리는 첫 갈림길이다.
- * 갤러리와 요청이 그다음인데, 둘 다 "다시 오게 만드는" 자리다 — 갤러리는 남의 결과물을 보고
- * 따라 만들게 하고, 요청은 다음에 무엇을 만들지 알려준다.
+ * 로고는 왼쪽, 메뉴는 한가운데, 계정은 오른쪽. 메뉴를 가운데 두면 왼쪽 로고와 오른쪽
+ * 계정 영역의 폭이 달라져도 메뉴 위치가 흔들리지 않아, 화면을 옮겨 다녀도 같은 자리에서
+ * 같은 것을 찾게 된다.
  *
- * 공지·도움말·약관은 푸터로 내렸다. 매일 누르는 것이 아니라 필요할 때 찾는 것이라,
- * 상단에 두면 정작 중요한 메뉴를 밀어낸다.
+ * 메뉴에는 네모난 배경을 두지 않는다. 글자만 두어야 상단바가 조용해지고, 화면의 주인공인
+ * 결과물이 먼저 보인다. 지금 보고 있는 곳은 글자 색과 굵기로만 알린다.
+ *
+ * 좁은 화면에서는 가운데 정렬이 성립하지 않으므로 메뉴를 아랫줄로 내린다.
  */
 const NAV = [
   { href: "/explore?contentType=VIDEO", label: "영상", contentType: "VIDEO" },
@@ -27,63 +29,130 @@ const NAV = [
 
 export function SiteHeader() {
   return (
-    <header className="sticky top-0 z-30 border-b border-line bg-ground/85 backdrop-blur-xl">
-      <div className="mx-auto flex h-16 max-w-7xl items-center gap-5 px-4">
-        <Link href="/" className="shrink-0 text-[17px] font-bold tracking-tight text-ink">
-          {SERVICE.name}
+    <header className="sticky top-0 z-40 border-b border-line bg-ground/90 backdrop-blur-xl">
+      <div className="mx-auto grid h-16 max-w-[1280px] grid-cols-[1fr_auto_1fr] items-center gap-4 px-4">
+        <Link href="/" className="flex items-center gap-2 justify-self-start" aria-label="프롬픽">
+          <Logo />
         </Link>
 
-        <Suspense fallback={<div className="flex-1" />}>
+        <Suspense fallback={<div />}>
           <Nav />
         </Suspense>
 
-        <div className="ml-auto flex items-center gap-2">
-          {/*
-            검색은 헤더에 둔다. 첫 화면에서는 무엇을 만들 수 있는지 보여주는 게 먼저이고,
-            찾으러 온 사람은 어느 화면에서든 바로 칠 수 있어야 한다.
-          */}
+        <div className="flex items-center gap-2 justify-self-end">
           <Suspense fallback={null}>
             <HeaderSearch />
           </Suspense>
-          <UserMenu />
+          <Suspense fallback={null}>
+            <AccountArea />
+          </Suspense>
         </div>
       </div>
+
+      <Suspense fallback={null}>
+        <NarrowNav />
+      </Suspense>
     </header>
   );
 }
 
-function Nav() {
+/**
+ * 로고.
+ *
+ * 마크와 글자를 가로로 세운다. 원본은 세로 조합인데, 상단바가 64px이라 그대로 넣으면 글자가
+ * 읽을 수 없는 크기가 된다.
+ *
+ * 마크는 짙은 남색이라 흰 바탕 위에 얹는다 — 어두운 상단바에 그대로 올리면 배경에 묻힌다.
+ * 글자는 흰색으로 뽑아둔 것을 쓰므로 바탕이 필요 없다.
+ *
+ * 그림을 못 불러오면 글자로 돌아간다. 깨진 그림 아이콘을 보여주는 것보다 낫다.
+ */
+function Logo() {
+  const [failed, setFailed] = useState(false);
+
+  if (failed) {
+    return <span className="text-[18px] font-bold tracking-[-0.04em] text-ink">PromPick</span>;
+  }
+
+  return (
+    <>
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/logo-mark.png"
+          alt=""
+          className="h-7 w-7 object-contain"
+          onError={() => setFailed(true)}
+        />
+      </span>
+
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/logo-wordmark.png"
+        alt=""
+        className="h-[15px] w-auto"
+        onError={() => setFailed(true)}
+      />
+    </>
+  );
+}
+
+/** 지금 보고 있는 메뉴가 어느 것인지 */
+function useActiveHref() {
   const pathname = usePathname();
   const contentType = useSearchParams().get("contentType");
 
-  return (
-    <nav className="hidden items-center gap-0.5 md:flex">
-      {NAV.map((item) => {
-        const active =
-          "contentType" in item
-            ? pathname === "/explore" && contentType === item.contentType
-            : pathname.startsWith(item.href);
+  return (item: (typeof NAV)[number]) =>
+    "contentType" in item
+      ? pathname === "/explore" && contentType === item.contentType
+      : pathname.startsWith(item.href);
+}
 
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={cn(
-              "rounded-full px-3.5 py-2 text-[14px] transition-colors",
-              active
-                ? "bg-surface font-semibold text-ink"
-                : "text-ink-soft hover:bg-surface hover:text-ink",
-            )}
-          >
-            {item.label}
-          </Link>
-        );
-      })}
+function Nav() {
+  const isActive = useActiveHref();
+
+  return (
+    <nav className="hidden items-center gap-7 justify-self-center md:flex">
+      {NAV.map((item) => (
+        <Link
+          key={item.href}
+          href={item.href}
+          aria-current={isActive(item) ? "page" : undefined}
+          className={cn(
+            "text-[15px] transition-colors",
+            isActive(item) ? "font-semibold text-ink" : "text-ink-soft hover:text-ink",
+          )}
+        >
+          {item.label}
+        </Link>
+      ))}
     </nav>
   );
 }
 
-/** 헤더 검색. 좁은 화면에서는 아이콘만 남는다 */
+/** 좁은 화면용 아랫줄 메뉴. 가운데 정렬 대신 밀어서 보는 줄이 된다 */
+function NarrowNav() {
+  const isActive = useActiveHref();
+
+  return (
+    <nav className="scroll-row flex h-11 items-center gap-1 overflow-x-auto border-t border-line px-2 md:hidden">
+      {NAV.map((item) => (
+        <Link
+          key={item.href}
+          href={item.href}
+          aria-current={isActive(item) ? "page" : undefined}
+          className={cn(
+            "shrink-0 px-2.5 text-[14px] transition-colors",
+            isActive(item) ? "font-semibold text-ink" : "text-ink-soft",
+          )}
+        >
+          {item.label}
+        </Link>
+      ))}
+    </nav>
+  );
+}
+
 function HeaderSearch() {
   const router = useRouter();
   const [query, setQuery] = useState("");
@@ -95,25 +164,93 @@ function HeaderSearch() {
         const trimmed = query.trim();
         if (trimmed) router.push(`/search?q=${encodeURIComponent(trimmed)}`);
       }}
-      className="hidden items-center gap-1.5 rounded-full border border-line bg-surface px-3 py-1.5 sm:flex"
+      className="hidden items-center gap-1.5 rounded-lg bg-white/5 px-3 py-1.5 lg:flex"
     >
-      <span className="text-ink-faint" aria-hidden>
-        <SearchIcon />
-      </span>
+      <SearchIcon />
       <input
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder="찾아보기"
         aria-label="템플릿 검색"
-        className="w-28 bg-transparent text-[13px] text-ink outline-none placeholder:text-ink-faint lg:w-40"
+        className="w-24 bg-transparent text-[13px] text-ink outline-none placeholder:text-ink-faint xl:w-32"
       />
     </form>
   );
 }
 
+function AccountArea() {
+  const { loading, signedIn, me, signOut } = useSession();
+  const pathname = usePathname();
+
+  if (loading) return <span className="h-8 w-20" />;
+
+  if (!signedIn) {
+    return (
+      <div className="flex items-center gap-1.5">
+        <ButtonLink
+          href={`/login?next=${encodeURIComponent(pathname)}`}
+          variant="ghost"
+          size="sm"
+        >
+          로그인
+        </ButtonLink>
+        <ButtonLink href="/login" size="sm">
+          가입하기
+        </ButtonLink>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-1.5">
+      {/*
+        운영자에게만 보이는 입구.
+
+        운영 화면은 주소를 외워서 들어가는 곳이 아니다. 템플릿을 고치다 서비스 화면으로 나와
+        확인하고 다시 돌아가는 일이 잦은데, 그때마다 주소창에 /admin 을 치게 할 이유가 없다.
+      */}
+      {me?.role === "ADMIN" && (
+        <Link
+          href="/admin"
+          className="rounded-lg border border-line px-2.5 py-1.5 text-[13px] font-semibold text-ink-soft transition-colors hover:border-ink-faint hover:text-ink"
+        >
+          운영
+        </Link>
+      )}
+
+      <Link
+        href="/my/credits"
+        className="rounded-lg bg-white/5 px-2.5 py-1.5 text-[13px] font-semibold text-ink"
+      >
+        <span aria-hidden>🪙</span> {me?.creditBalance?.toLocaleString() ?? 0}
+      </Link>
+      <Link
+        href="/my/jobs"
+        className="hidden rounded-lg px-2.5 py-1.5 text-[13px] text-ink-soft hover:text-ink sm:block"
+      >
+        {me?.nickname ?? "내 정보"}
+      </Link>
+      <button
+        type="button"
+        onClick={() => void signOut()}
+        className="rounded-lg px-2.5 py-1.5 text-[13px] text-ink-faint hover:text-ink"
+      >
+        로그아웃
+      </button>
+    </div>
+  );
+}
+
 function SearchIcon() {
   return (
-    <svg viewBox="0 0 20 20" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden>
+    <svg
+      viewBox="0 0 20 20"
+      className="h-4 w-4 text-ink-faint"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      aria-hidden
+    >
       <circle cx="9" cy="9" r="6" />
       <path d="m13.5 13.5 4 4" strokeLinecap="round" />
     </svg>

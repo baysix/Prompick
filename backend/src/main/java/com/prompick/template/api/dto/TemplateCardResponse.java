@@ -21,6 +21,13 @@ public record TemplateCardResponse(
         /** 예: "제품 사진 1장" */
         String requiredPhotoSummary,
         String ratio,
+        /**
+         * 예시 그림의 실제 비율 (예: "281 / 352").
+         *
+         * <p>목록에서 타일이 차지할 자리를 이 값으로 잡는다. 올린 그림이 잘리지 않게 하려는
+         * 것이다. 크기를 모르는 예시는 null이고, 화면은 {@code ratio}로 대신한다.
+         */
+        String mediaRatio,
         PromptAccess promptAccess,
         int promptCost,
         GenerateAccess generateAccess,

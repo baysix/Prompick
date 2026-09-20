@@ -26,6 +26,9 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "관리자 - 예시 결과물")
 public class AdminMediaController {
 
+    private static final org.slf4j.Logger log =
+            org.slf4j.LoggerFactory.getLogger(AdminMediaController.class);
+
     private final TemplateMediaRepository media;
     private final TemplateRepository templates;
     private final StorageService storage;
@@ -89,6 +92,10 @@ public class AdminMediaController {
         }
 
         int nextOrder = media.findByTemplateIdOrderBySortOrderAscIdAsc(templateId).size();
+
+        // 올린 그림의 실제 크기를 재둔다. 목록에서 이 비율 그대로 자리를 잡게 하려는 것이다.
+        int[] size = measure(request.storageKey());
+
         TemplateMedia saved = media.save(new TemplateMedia(
                 templateId,
                 template.getContentType(),
@@ -96,7 +103,9 @@ public class AdminMediaController {
                 request.previewKey(),
                 // 미리보기가 따로 없으면 원본을 썸네일로 쓴다
                 request.thumbnailKey() == null ? request.storageKey() : request.thumbnailKey(),
-                nextOrder));
+                nextOrder,
+                size == null ? null : size[0],
+                size == null ? null : size[1]));
 
         return new MediaResponse(
                 saved.getId(),
@@ -132,4 +141,26 @@ public class AdminMediaController {
 
     public record MediaResponse(
             Long id, ContentType mediaType, String storageKey, String url, int sortOrder) {}
+
+    /**
+     * 그림의 가로·세로를 잰다.
+     *
+     * <p>읽지 못하면 비워둔다 — 영상이나 SVG가 여기에 해당한다. 크기를 모른다고 등록을 막지는
+     * 않는다. 화면이 템플릿 출력 비율로 대신할 수 있고, 예시를 못 올리는 쪽이 더 나쁘다.
+     */
+    private int[] measure(String storageKey) {
+        try (var in = storage.get(storageKey)) {
+            var image = javax.imageio.ImageIO.read(in);
+            if (image == null) {
+                log.debug("크기를 읽을 수 없는 형식입니다: {}", storageKey);
+                return null;
+            }
+            return new int[] {image.getWidth(), image.getHeight()};
+        } catch (Exception e) {
+            // 원인을 함께 남긴다. 키만 적어두면 왜 실패했는지 알 수 없다.
+            log.warn("예시 그림 크기를 읽지 못했습니다: {} ({})", storageKey, e.toString());
+            return null;
+        }
+    }
+
 }

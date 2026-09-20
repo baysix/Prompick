@@ -5,125 +5,60 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/shared/lib/cn";
 
 /**
- * 관리자 사이드바.
+ * 관리자 왼쪽 메뉴.
  *
- * 메뉴를 성격별로 묶는다. 운영자가 매일 도는 순서 — 무엇을 팔지(콘텐츠), 잘 돌고 있는지(운영),
- * 돈은 어떻게 되는지(회원·정산) — 가 그대로 순서가 된다.
- *
- * 아직 만들지 않은 화면은 감추지 않고 "준비 중"으로 남겨 둔다. 전체 그림이 보여야
- * 지금 무엇이 비어 있는지 알 수 있다.
+ * 위 셋은 돈에 관한 것이고(얼마 벌고 얼마 썼나, 누가 무엇을 만들었나, 누구에게 얼마가 있나),
+ * 아래 셋은 무엇을 파는지에 관한 것이다(템플릿, 모델, 키). 돈 쪽을 위에 둔 이유는 매일 봐야 하는
+ * 것이 그쪽이기 때문이다. 템플릿은 만들 때만 들어간다.
  */
-interface Item {
-  href: string;
-  label: string;
-  ready: boolean;
-}
-
-const GROUPS: { title: string; items: Item[] }[] = [
-  {
-    title: "콘텐츠",
-    items: [
-      { href: "/admin/templates", label: "템플릿", ready: true },
-      { href: "/admin/categories", label: "카테고리", ready: false },
-      { href: "/admin/ai-models", label: "AI 모델", ready: true },
-      { href: "/admin/requests", label: "요청 게시판", ready: false },
-    ],
-  },
-  {
-    title: "운영",
-    items: [
-      { href: "/admin/jobs", label: "생성 작업", ready: false },
-      { href: "/admin/gallery", label: "갤러리 검수", ready: false },
-      { href: "/admin/reports", label: "신고", ready: false },
-      { href: "/admin/notice", label: "공지사항", ready: false },
-      { href: "/admin/settings", label: "운영 설정", ready: false },
-    ],
-  },
-  {
-    title: "회원 · 정산",
-    items: [
-      { href: "/admin/users", label: "회원", ready: false },
-      { href: "/admin/ledger", label: "프롬비 원장", ready: false },
-      { href: "/admin/credit-products", label: "충전 상품", ready: false },
-      { href: "/admin/payments", label: "결제 · 환불", ready: false },
-    ],
-  },
+const NAV = [
+  { href: "/admin", label: "대시보드", exact: true },
+  { href: "/admin/operations", label: "매출·원가" },
+  { href: "/admin/jobs", label: "제작 내역" },
+  { href: "/admin/users", label: "사용자" },
+  { href: "/admin/requests", label: "요청" },
+  { href: "/admin/templates", label: "템플릿" },
+  { href: "/admin/ai-models", label: "AI 모델" },
+  { href: "/admin/keys", label: "제공사 키" },
 ];
 
 export function AdminSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden w-60 shrink-0 border-r border-line bg-surface lg:block">
-      <div className="sticky top-0 flex h-screen flex-col">
-        <div className="flex h-14 items-center gap-2 border-b border-line px-5">
-          <span className="text-[15px] font-semibold text-ink">프롬픽</span>
-          <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[11px] font-semibold text-accent">
-            관리자
-          </span>
-        </div>
+    <aside className="sticky top-0 flex h-dvh w-52 shrink-0 flex-col border-r border-line bg-surface">
+      <div className="px-5 py-5">
+        <Link href="/admin" className="text-[16px] font-bold tracking-[-0.04em] text-ink">
+          프롬픽 <span className="text-ink-faint">운영</span>
+        </Link>
+      </div>
 
-        <nav className="flex-1 overflow-y-auto px-3 py-4">
-          <NavLink href="/admin" label="대시보드" active={pathname === "/admin"} ready />
+      <nav className="flex-1 px-3">
+        {NAV.map((item) => {
+          const active = item.exact ? pathname === item.href : pathname.startsWith(item.href);
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                "mb-0.5 block rounded-lg px-3 py-2 text-[14px] transition-colors",
+                active ? "bg-white/8 font-semibold text-ink" : "text-ink-soft hover:text-ink",
+              )}
+            >
+              {item.label}
+            </Link>
+          );
+        })}
+      </nav>
 
-          {GROUPS.map((group) => (
-            <div key={group.title} className="mt-5">
-              <p className="px-3 pb-1.5 text-[11px] font-medium text-ink-faint">{group.title}</p>
-              {group.items.map((item) => (
-                <NavLink
-                  key={item.href}
-                  href={item.href}
-                  label={item.label}
-                  ready={item.ready}
-                  active={pathname.startsWith(item.href)}
-                />
-              ))}
-            </div>
-          ))}
-        </nav>
-
-        <div className="border-t border-line px-5 py-3">
-          <Link href="/" className="text-[12px] text-ink-soft hover:text-ink">
-            서비스 화면 보기
-          </Link>
-        </div>
+      <div className="border-t border-line px-3 py-3">
+        <Link
+          href="/"
+          className="block rounded-lg px-3 py-2 text-[13px] text-ink-soft transition-colors hover:text-ink"
+        >
+          서비스 화면으로
+        </Link>
       </div>
     </aside>
-  );
-}
-
-function NavLink({
-  href,
-  label,
-  active,
-  ready,
-}: {
-  href: string;
-  label: string;
-  active: boolean;
-  ready: boolean;
-}) {
-  if (!ready) {
-    return (
-      <span
-        className="flex cursor-default items-center justify-between rounded-md px-3 py-2 text-[13px] text-ink-faint"
-        title="아직 만들지 않았어요"
-      >
-        {label}
-        <span className="text-[10px]">준비 중</span>
-      </span>
-    );
-  }
-
-  return (
-    <Link
-      href={href}
-      className={cn(
-        "flex items-center rounded-md px-3 py-2 text-[13px] transition-colors",
-        active ? "bg-accent-soft font-semibold text-accent" : "text-ink-soft hover:bg-surface-2 hover:text-ink",
-      )}
-    >
-      {label}
-    </Link>
   );
 }

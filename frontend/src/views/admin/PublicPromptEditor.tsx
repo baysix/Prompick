@@ -4,102 +4,120 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { adminApi, adminKeys } from "@/entities/admin/api/adminApi";
 import type { PublicPromptForm } from "@/entities/admin/model/types";
+import type { PromptAccess } from "@/entities/template/model/types";
+import { Button } from "@/shared/ui/Button";
+import { Card, Field, Input, Textarea } from "@/widgets/admin-shell/Card";
 
 /**
- * 공개 프롬프트 편집기.
+ * 사용자에게 보여줄 프롬프트 원문.
  *
- * 여기 넣는 값은 사용자가 그대로 복사해 가는 텍스트다. 서버가 실제로 실행하는 내부 프롬프트는
- * 아래 제작 방법(파이프라인)에 따로 넣는다. 둘은 보통 다르다 — 그래서 공개해도 품질이 재현되지 않는다.
+ * 이것은 파이프라인과 완전히 다른 물건이다. 파이프라인은 우리가 돌리는 내부 지시문이고,
+ * 이건 사용자가 자기 AI에 붙여넣어 쓰라고 주는 글이다. 두 값이 같아도 테이블이 따로인 이유는,
+ * 한쪽을 공개로 바꾸다가 다른 쪽이 딸려 나가는 일을 구조적으로 막기 위해서다.
  */
-export function PublicPromptEditor({ templateId }: { templateId: number }) {
+const EMPTY: PublicPromptForm = {
+  body: "",
+  negativePrompt: null,
+  recommendedTool: null,
+  usageTip: null,
+};
+
+export function PublicPromptEditor({
+  templateId,
+  promptAccess,
+}: {
+  templateId: number;
+  promptAccess: PromptAccess;
+}) {
   const queryClient = useQueryClient();
   const [draft, setDraft] = useState<PublicPromptForm | null>(null);
-  const [saved, setSaved] = useState(false);
 
-  const { data } = useQuery({
+  const { data, isPending } = useQuery({
     queryKey: adminKeys.publicPrompt(templateId),
-    queryFn: () => adminApi.publicPrompt(templateId),
+    queryFn: () => adminApi.publicPrompt(templateId).catch(() => EMPTY),
   });
 
-  const value = draft ??
-    data ?? { body: "", negativePrompt: null, recommendedTool: null, usageTip: null };
-
   const save = useMutation({
-    mutationFn: () => adminApi.savePublicPrompt(templateId, value),
+    mutationFn: (form: PublicPromptForm) => adminApi.savePublicPrompt(templateId, form),
     onSuccess: () => {
       setDraft(null);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
       void queryClient.invalidateQueries({ queryKey: adminKeys.publicPrompt(templateId) });
-      void queryClient.invalidateQueries({ queryKey: adminKeys.template(templateId) });
+      void queryClient.invalidateQueries({ queryKey: adminKeys.templates() });
     },
   });
 
-  function set(patch: Partial<PublicPromptForm>) {
-    setDraft({ ...value, ...patch });
-  }
+  if (isPending) return <Card title="공개 프롬프트">불러오는 중</Card>;
+
+  const form = draft ?? data ?? EMPTY;
+  const set = (patch: Partial<PublicPromptForm>) => setDraft({ ...form, ...patch });
 
   return (
-    <section className="space-y-4">
-      <div>
-        <h2 className="text-[16px] font-semibold text-ink">공개할 프롬프트</h2>
-        <p className="mt-0.5 text-[12px] text-ink-soft">
-          사용자가 복사해서 쓰는 원문이에요. 아래 제작 방법과 같을 필요는 없어요.
-        </p>
-      </div>
-
-      <div className="space-y-1">
-        <label className="block text-[12px] text-ink-soft">원문</label>
-        <textarea
-          value={value.body}
-          onChange={(e) => set({ body: e.target.value })}
-          rows={4}
-          placeholder="A product floating in mid-air against a seamless pastel backdrop..."
-          className="w-full border border-line bg-surface px-2.5 py-2 font-mono text-[12.5px] leading-relaxed"
-        />
-      </div>
-
-      <div className="space-y-1">
-        <label className="block text-[12px] text-ink-soft">빼야 할 것</label>
-        <input
-          value={value.negativePrompt ?? ""}
-          onChange={(e) => set({ negativePrompt: e.target.value })}
-          placeholder="text, watermark, extra objects"
-          className="w-full border border-line bg-surface px-2.5 py-1.5 font-mono text-[12.5px]"
-        />
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-1">
-          <label className="block text-[12px] text-ink-soft">어디에 쓰는지</label>
-          <input
-            value={value.recommendedTool ?? ""}
-            onChange={(e) => set({ recommendedTool: e.target.value })}
-            placeholder="Midjourney v7 / Runway Gen-4"
-            className="w-full border border-line bg-surface px-2.5 py-1.5 text-[13px]"
-          />
-        </div>
-        <div className="space-y-1">
-          <label className="block text-[12px] text-ink-soft">쓰는 요령</label>
-          <input
-            value={value.usageTip ?? ""}
-            onChange={(e) => set({ usageTip: e.target.value })}
-            className="w-full border border-line bg-surface px-2.5 py-1.5 text-[13px]"
-          />
-        </div>
-      </div>
-
-      <div className="flex items-center gap-3">
-        <button
-          type="button"
-          onClick={() => save.mutate()}
-          disabled={!value.body.trim() || save.isPending}
-          className="rounded-sm border border-line px-3 py-1.5 text-[13px] text-ink disabled:opacity-40"
+    <Card
+      title="공개 프롬프트"
+      description={
+        promptAccess === "HIDDEN"
+          ? "지금은 비공개예요. 여기 적어두어도 사용자에게 보이지 않아요."
+          : promptAccess === "FREE"
+            ? "로그인한 사용자 누구나 이 원문을 볼 수 있어요."
+            : "프롬비를 낸 사용자에게 이 원문이 그대로 보여요."
+      }
+      actions={
+        <Button
+          size="sm"
+          disabled={save.isPending || !draft || form.body.trim() === ""}
+          onClick={() => save.mutate(form)}
         >
-          {save.isPending ? "저장 중" : "프롬프트 저장"}
-        </button>
-        {saved && <span className="text-[12px] text-free">저장했어요</span>}
+          {save.isPending ? "저장 중" : "저장"}
+        </Button>
+      }
+    >
+      <div className="space-y-4">
+        <Field
+          label="원문"
+          required
+          hint="사용자가 복사해서 쓸 글이에요. 우리 내부 지시문이 아니라, 다른 AI에 붙여넣어도 통하는 형태로 적어주세요."
+        >
+          <Textarea
+            value={form.body}
+            onChange={(e) => set({ body: e.target.value })}
+            rows={8}
+            className="font-mono text-[13px]"
+            placeholder="A cinematic portrait of..."
+          />
+        </Field>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="제외할 것" hint="네거티브 프롬프트를 쓰는 도구를 위해">
+            <Input
+              value={form.negativePrompt ?? ""}
+              onChange={(e) => set({ negativePrompt: e.target.value || null })}
+              className="font-mono text-[13px]"
+              placeholder="blurry, watermark"
+            />
+          </Field>
+
+          <Field label="추천 도구" hint="이 프롬프트가 가장 잘 먹히는 곳">
+            <Input
+              value={form.recommendedTool ?? ""}
+              onChange={(e) => set({ recommendedTool: e.target.value || null })}
+              placeholder="Midjourney v7"
+            />
+          </Field>
+        </div>
+
+        <Field label="쓰는 요령" hint="사용자가 실패하기 쉬운 지점을 한두 줄로">
+          <Textarea
+            value={form.usageTip ?? ""}
+            onChange={(e) => set({ usageTip: e.target.value || null })}
+            rows={3}
+            placeholder="얼굴이 정면인 사진일수록 잘 나와요."
+          />
+        </Field>
+
+        {save.isError && (
+          <p className="text-[13px] text-paid">저장하지 못했어요. 잠시 후 다시 해주세요.</p>
+        )}
       </div>
-    </section>
+    </Card>
   );
 }

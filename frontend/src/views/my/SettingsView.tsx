@@ -4,8 +4,9 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { api, ApiError } from "@/shared/api/client";
 import { useSession, type Me } from "@/shared/auth/SessionProvider";
+import { Button } from "@/shared/ui/Button";
 
-/** 계정 설정. 지금 바꿀 수 있는 것과 아직 못 바꾸는 것을 솔직하게 나눠 보여준다. */
+/** 계정 설정. 지금 바꿀 수 있는 것과 아직 못 바꾸는 것을 솔직하게 나눠 보여준다 */
 export function SettingsView() {
   const { me, signOut } = useSession();
   const queryClient = useQueryClient();
@@ -31,7 +32,7 @@ export function SettingsView() {
   });
 
   return (
-    <div className="space-y-8">
+    <div className="max-w-lg space-y-8">
       <section>
         <h2 className="text-[15px] font-semibold text-ink">닉네임</h2>
         <div className="mt-3 flex flex-wrap gap-2">
@@ -39,24 +40,22 @@ export function SettingsView() {
             value={value}
             onChange={(e) => setNickname(e.target.value)}
             maxLength={20}
-            className="min-w-0 flex-1 rounded-2xl border border-line bg-ground px-3.5 py-2.5 text-[14px] text-ink"
+            className="min-w-0 flex-1 rounded-xl bg-surface px-3.5 py-2.5 text-[14px] text-ink outline-none"
           />
-          <button
-            type="button"
+          <Button
             onClick={() => save.mutate()}
             disabled={save.isPending || value.trim().length < 2}
-            className="bg-brand rounded-full px-4 py-2.5 text-[14px] font-semibold text-accent-ink disabled:opacity-40"
           >
             {save.isPending ? "저장 중" : "저장"}
-          </button>
+          </Button>
         </div>
-        {message && <p className="mt-2 text-[13px] text-free">{message}</p>}
-        {error && <p className="mt-2 text-[13px] text-[#c2410c]">{error}</p>}
+        {message && <p className="mt-2 text-[13px] text-accent">{message}</p>}
+        {error && <p className="mt-2 text-[13px] text-[#ff9b9b]">{error}</p>}
       </section>
 
       <section>
         <h2 className="text-[15px] font-semibold text-ink">계정</h2>
-        <dl className="mt-3 divide-y divide-line rounded-2xl border border-line">
+        <dl className="mt-3 divide-y divide-line rounded-xl border border-line">
           <Row label="이메일" value={me?.email ?? "-"} />
           <Row
             label="휴대폰 인증"
@@ -69,21 +68,12 @@ export function SettingsView() {
       <section>
         <h2 className="text-[15px] font-semibold text-ink">그 밖에</h2>
         <div className="mt-3 flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => void signOut()}
-            className="rounded-full border border-line px-4 py-2 text-[14px] font-medium text-ink"
-          >
+          <Button variant="secondary" onClick={() => void signOut()}>
             로그아웃
-          </button>
-          <button
-            type="button"
-            disabled
-            className="rounded-full px-4 py-2 text-[14px] text-ink-faint"
-            title="준비 중이에요"
-          >
+          </Button>
+          <Button variant="ghost" disabled title="준비 중이에요">
             회원 탈퇴
-          </button>
+          </Button>
         </div>
       </section>
     </div>

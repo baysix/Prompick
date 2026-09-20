@@ -8,10 +8,39 @@ export type AiProvider =
   | "MOCK"
   | "INTERNAL"
   | "OPENAI"
+  | "ANTHROPIC"
   | "GOOGLE"
+  | "XAI"
+  | "BYTEDANCE"
   | "HIGGSFIELD"
   | "RUNWAY"
   | "KLING";
+
+/**
+ * 제공사 키의 상태.
+ *
+ * 키 원문은 이 타입 어디에도 없다. 서버가 내려주지 않으므로 프론트가 알 방법이 없다.
+ * keyHint는 끝 네 자리뿐이고, 어느 키를 넣어뒀는지 구분하는 용도다.
+ */
+export interface ProviderKey {
+  provider: AiProvider;
+  displayName: string;
+  /** DB에 봉인해 둔 키가 있는지 */
+  stored: boolean;
+  /** 설정 파일(.env)에만 있는지 */
+  fromEnv: boolean;
+  keyHint: string | null;
+  active: boolean;
+  memo: string | null;
+  updatedBy: string | null;
+  updatedAt: string | null;
+}
+
+export interface ProviderKeyList {
+  items: ProviderKey[];
+  /** 마스터 키가 있어서 화면에서 키를 저장할 수 있는 상태인지 */
+  canStore: boolean;
+}
 
 /** 모델이 담당하는 단계 유형 */
 export type Capability = "TEXT" | "VISION" | "IMAGE" | "IMAGE_EDIT" | "VIDEO" | "AUDIO";
@@ -192,4 +221,146 @@ export interface PresignedUpload {
   url: string;
   method: string;
   headers: Record<string, string>;
+}
+
+/* ---------------------------------------------------------------------------
+   운영·정산
+--------------------------------------------------------------------------- */
+
+export interface AdminUserSummary {
+  id: number;
+  nickname: string;
+  email: string | null;
+  role: "USER" | "ADMIN";
+  status: "ACTIVE" | "SUSPENDED" | "WITHDRAWN";
+  identityVerified: boolean;
+  creditBalance: number;
+  createdAt: string;
+  lastLoginAt: string | null;
+}
+
+export interface CreditEntry {
+  id: number;
+  /** 양수는 들어온 것, 음수는 나간 것 */
+  amount: number;
+  balanceAfter: number;
+  reason: string;
+  reasonLabel: string;
+  refType: string | null;
+  refId: number | null;
+  actor: string | null;
+  memo: string | null;
+  createdAt: string;
+}
+
+export interface AdminUserDetail {
+  user: AdminUserSummary;
+  totalCharged: number;
+  totalSpent: number;
+  credits: CreditEntry[];
+}
+
+/** 기간별 매출과 원가. 둘을 따로 보면 제작이 늘어난 게 좋은 일인지 알 수 없다 */
+export interface OperationsSummary {
+  days: number;
+  totalJobs: number;
+  paidJobs: number;
+  freeJobs: number;
+  failedJobs: number;
+  /** 받은 프롬비 */
+  revenue: number;
+  /** 외부 AI에 나간 원가(원) */
+  providerCost: number;
+  /** 그중 무료 제작에 들어간 원가. 매출 없이 나간 돈 */
+  freeCost: number;
+  totalUsers: number;
+  totalTemplates: number;
+}
+
+export interface AdminJobRow {
+  id: number;
+  userId: number;
+  nickname: string;
+  templateTitle: string;
+  status: "QUEUED" | "RUNNING" | "SUCCEEDED" | "FAILED";
+  chargeType: "FREE" | "PAID";
+  creditCost: number;
+  providerCost: number;
+  errorCode: string | null;
+  createdAt: string;
+  finishedAt: string | null;
+}
+
+/** 요청 게시판 — 관리자용. 사용자용과 달리 작성자와 운영 메모를 함께 본다 */
+export interface AdminRequestRow {
+  id: number;
+  title: string;
+  referenceUrl: string | null;
+  description: string | null;
+  status: "PENDING" | "REVIEWING" | "BUILDING" | "DONE" | "REJECTED";
+  statusLabel: string;
+  voteCount: number;
+  authorNickname: string;
+  templateId: number | null;
+  templateSlug: string | null;
+  adminNote: string | null;
+  createdAt: string;
+}
+
+export interface RequestTemplateOption {
+  id: number;
+  title: string;
+  slug: string;
+}
+
+/** 템플릿이 받는 입력 칸. 프롬프트의 @이름에 무엇을 이을지 고를 목록 */
+export interface InputFieldOption {
+  fieldKey: string;
+  label: string;
+  /** 사진 칸인지. 사진이 아니면 프롬프트 변수로 쓰인다 */
+  isPhoto: boolean;
+}
+
+/* ---------------------------------------------------------------------------
+   제작 상세 — 환불 판단에 필요한 것들
+--------------------------------------------------------------------------- */
+
+export interface JobStepRow {
+  index: number;
+  status: string;
+  /** 실패 원문. 관리자만 본다 */
+  errorDetail: string | null;
+  startedAt: string | null;
+  finishedAt: string | null;
+}
+
+export interface JobMoneyRow {
+  id: number;
+  amount: number;
+  balanceAfter: number;
+  reason: string;
+  reasonLabel: string;
+  actor: string | null;
+  memo: string | null;
+  createdAt: string;
+}
+
+export interface JobDetail {
+  id: number;
+  userId: number;
+  nickname: string;
+  templateTitle: string;
+  status: "QUEUED" | "RUNNING" | "SUCCEEDED" | "FAILED";
+  chargeType: "FREE" | "PAID";
+  creditCost: number;
+  errorCode: string | null;
+  retryCount: number;
+  createdAt: string;
+  finishedAt: string | null;
+  outputCount: number;
+  steps: JobStepRow[];
+  money: JobMoneyRow[];
+  /** 이미 돌려준 적이 있는지. 이중 지급을 막는 가장 중요한 값 */
+  alreadyRefunded: boolean;
+  refundable: { allowed: boolean; note: string };
 }

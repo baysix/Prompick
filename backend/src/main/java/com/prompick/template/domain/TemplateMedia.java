@@ -31,6 +31,16 @@ public class TemplateMedia {
     @Column(name = "sort_order", nullable = false)
     private int sortOrder;
 
+    /**
+     * 원본 픽셀 크기.
+     *
+     * <p>목록에서 타일이 차지할 자리를 잡는 데 쓴다. 읽지 못하는 형식(SVG 등)은 비어 있고,
+     * 그때는 화면이 템플릿 출력 비율로 대신한다.
+     */
+    @Column private Integer width;
+
+    @Column private Integer height;
+
     protected TemplateMedia() {}
 
     public TemplateMedia(
@@ -40,12 +50,47 @@ public class TemplateMedia {
             String previewKey,
             String thumbnailKey,
             int sortOrder) {
+        this(templateId, mediaType, storageKey, previewKey, thumbnailKey, sortOrder, null, null);
+    }
+
+    public TemplateMedia(
+            Long templateId,
+            ContentType mediaType,
+            String storageKey,
+            String previewKey,
+            String thumbnailKey,
+            int sortOrder,
+            Integer width,
+            Integer height) {
         this.templateId = templateId;
         this.mediaType = mediaType;
         this.storageKey = storageKey;
         this.previewKey = previewKey;
         this.thumbnailKey = thumbnailKey;
         this.sortOrder = sortOrder;
+        this.width = width;
+        this.height = height;
+    }
+
+    /**
+     * 화면이 쓸 비율. 예: "281 / 352"
+     *
+     * <p>CSS aspect-ratio 에 그대로 넣을 수 있는 형태로 준다. 크기를 모르면 null이고,
+     * 그때는 화면이 알아서 다른 근거를 찾는다.
+     */
+    public String aspectRatio() {
+        if (width == null || height == null || width <= 0 || height <= 0) {
+            return null;
+        }
+        return width + " / " + height;
+    }
+
+    public Integer getWidth() {
+        return width;
+    }
+
+    public Integer getHeight() {
+        return height;
     }
 
     public Long getId() {

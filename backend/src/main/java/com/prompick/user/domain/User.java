@@ -112,6 +112,27 @@ public class User {
         return status;
     }
 
+    /**
+     * 계정을 멈추거나 되살린다.
+     *
+     * <p>탈퇴는 이 길로 하지 않는다. 탈퇴는 지워야 할 개인정보와 남겨야 할 거래 기록을 나누는
+     * 별도의 절차라, 상태만 바꾸고 끝낼 일이 아니다.
+     */
+    public void changeStatus(Status status) {
+        if (status == Status.WITHDRAWN) {
+            throw new IllegalArgumentException("탈퇴는 이 방법으로 처리하지 않습니다");
+        }
+        this.status = status;
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
+    public Instant getLastLoginAt() {
+        return lastLoginAt;
+    }
+
     public Instant getPhoneVerifiedAt() {
         return phoneVerifiedAt;
     }

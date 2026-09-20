@@ -23,10 +23,13 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "회원")
 public class AuthController {
 
+    private final com.prompick.credit.app.CreditService credits;
+
     private final UserService users;
     private final PrompickProperties properties;
 
-    public AuthController(UserService users, PrompickProperties properties) {
+    public AuthController(UserService users, PrompickProperties properties, com.prompick.credit.app.CreditService credits) {
+        this.credits = credits;
         this.users = users;
         this.properties = properties;
     }
@@ -47,8 +50,7 @@ public class AuthController {
                 user.getRole().name(),
                 user.isIdentityVerified(),
                 user.getPhoneVerifiedAt(),
-                // 프롬비 지갑은 5단계에서 붙인다. 그때까지는 0으로 보인다.
-                0,
+                credits.balanceOf(user.getId()),
                 properties.free().dailyGenerateLimit(),
                 properties.credit().unitName());
     }

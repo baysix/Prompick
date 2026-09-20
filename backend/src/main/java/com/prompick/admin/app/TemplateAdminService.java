@@ -69,6 +69,20 @@ public class TemplateAdminService {
      * <p>게시하기 전에 준비가 끝났는지 확인한다. 반쯤 만든 템플릿이 목록에 나가면 사용자가 실패를
      * 겪게 되는데, 그 비용은 환불과 신뢰 하락으로 돌아온다.
      */
+    /**
+     * 주소로 찾는다.
+     *
+     * <p>운영자가 서비스 화면을 보다가 "이거 고쳐야겠다" 싶을 때 쓴다. 사용자 화면은 템플릿의
+     * id를 모르고 주소만 알기 때문에, 주소로 들어올 길이 필요하다.
+     */
+    @Transactional(readOnly = true)
+    public AdminTemplateResponse getBySlug(String slug) {
+        return templates
+                .findBySlug(slug)
+                .map(this::toResponse)
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND));
+    }
+
     public AdminTemplateResponse publish(Long id) {
         Template template = find(id);
 
