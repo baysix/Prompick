@@ -19,8 +19,13 @@ services:
 
     # backend/ 안이 바뀔 때만 다시 빌드한다. 프론트만 고친 커밋에 백엔드까지 재배포되면
     # 무료 플랜의 빌드 시간을 아무 이유 없이 쓴다.
-    # (이 값은 재빌드 판단에만 쓰이고, 위 Dockerfile 경로에는 영향을 주지 않는다)
-    rootDir: backend
+    #
+    # 여기에 rootDir 을 쓰면 안 된다. rootDir 은 "서비스가 사는 폴더"를 바꾸는 값이라
+    # 위의 dockerContext 해석에 끼어들 수 있고, 그러면 빌드 컨텍스트가 저장소 루트가 되어
+    # COPY src 가 "/src: not found" 로 죽는다. 재빌드 조건만 거르려면 buildFilter 가 맞다.
+    buildFilter:
+      paths:
+        - backend/**
 
     # 깨어 있는지 확인하는 주소. 인증 없이 열려 있다.
     healthCheckPath: /actuator/health
