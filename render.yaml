@@ -1,0 +1,72 @@
+# =============================================================================
+# Render 배포 설계도
+#
+# 이 파일 하나로 서비스가 만들어진다. 대시보드에서 손으로 설정하면 그 설정이 어디에도
+# 기록되지 않아, 나중에 무엇을 왜 그렇게 두었는지 아무도 모르게 된다.
+#
+# 비밀값(sync: false)은 여기 적지 않는다. Render 대시보드에서 직접 넣는다.
+# =============================================================================
+
+services:
+  - type: web
+    name: prompick-api
+    runtime: docker
+    plan: free
+    region: singapore          # 한국에서 가장 가까운 리전
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    branch: main
+
+    # backend/ 안이 바뀔 때만 다시 빌드한다. 프론트만 고친 커밋에 백엔드까지 재배포되면
+    # 무료 플랜의 빌드 시간을 아무 이유 없이 쓴다.
+    # (이 값은 재빌드 판단에만 쓰이고, 위 Dockerfile 경로에는 영향을 주지 않는다)
+    rootDir: backend
+
+    # 깨어 있는지 확인하는 주소. 인증 없이 열려 있다.
+    healthCheckPath: /actuator/health
+
+    envVars:
+      # --- Render 가 채워주는 것 ---
+      - key: SERVER_PORT
+        value: 10000
+
+      # --- 직접 넣어야 하는 것 (대시보드 → Environment) ---
+      #     sync: false 는 "이 파일에 값이 없으니 사람이 넣어라"는 뜻이다.
+      - key: DB_POOL_URL
+        sync: false
+      - key: DB_SESSION_URL
+        sync: false
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SECRET_KEY
+        sync: false
+
+      # 제공사 키를 DB 에 봉인할 때 쓰는 열쇠.
+      # 이 값이 바뀌면 저장해 둔 키를 못 읽는다. 한 번 정하면 바꾸지 않는다.
+      - key: PROMPICK_MASTER_KEY
+        sync: false
+
+      # 프론트 주소. 여기 없는 도메인에서 오는 요청은 브라우저가 막는다.
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
+
+      # --- 운영 정책 ---
+      # 무료 제작은 매출 없이 원가만 나간다. 사람이 붙기 시작하면 이 숫자가 곧 지출이다.
+      - key: FREE_DAILY_LIMIT
+        value: 1
+      # 계정을 여러 개 만들어 무료 횟수를 무한히 쓰는 것을 막는다. 운영에서는 반드시 켠다.
+      - key: FREE_REQUIRE_IDENTITY
+        value: true
+
+      - key: STORAGE_TYPE
+        value: SUPABASE
+      - key: SUPABASE_UPLOAD_BUCKET
+        value: uploads
+      - key: SUPABASE_OUTPUT_BUCKET
+        value: outputs
+      - key: SUPABASE_PUBLIC_BUCKET
+        value: public-assets
