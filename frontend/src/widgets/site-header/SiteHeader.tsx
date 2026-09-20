@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { useSession } from "@/shared/auth/SessionProvider";
+import { SIGNUP_OPEN } from "@/shared/config/env";
 import { cn } from "@/shared/lib/cn";
 import { ButtonLink } from "@/shared/ui/Button";
 
@@ -194,9 +195,11 @@ function AccountArea() {
         >
           로그인
         </ButtonLink>
-        <ButtonLink href="/login" size="sm">
-          가입하기
-        </ButtonLink>
+        {SIGNUP_OPEN && (
+          <ButtonLink href="/login" size="sm">
+            가입하기
+          </ButtonLink>
+        )}
       </div>
     );
   }

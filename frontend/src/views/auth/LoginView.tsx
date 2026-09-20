@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { api, ApiError } from "@/shared/api/client";
 import { supabase } from "@/shared/auth/supabase";
+import { SIGNUP_OPEN } from "@/shared/config/env";
 import { Button } from "@/shared/ui/Button";
 
 /**
@@ -90,19 +91,21 @@ export function LoginView() {
           </Button>
         </form>
 
-        <p className="mt-5 text-center text-[13px] text-ink-soft">
-          {mode === "signin" ? "처음이신가요?" : "이미 계정이 있나요?"}{" "}
-          <button
-            type="button"
-            onClick={() => {
-              setMode(mode === "signin" ? "signup" : "signin");
-              setError(null);
-            }}
-            className="font-semibold text-accent"
-          >
-            {mode === "signin" ? "가입하기" : "로그인"}
-          </button>
-        </p>
+        {SIGNUP_OPEN && (
+          <p className="mt-5 text-center text-[13px] text-ink-soft">
+            {mode === "signin" ? "처음이신가요?" : "이미 계정이 있나요?"}{" "}
+            <button
+              type="button"
+              onClick={() => {
+                setMode(mode === "signin" ? "signup" : "signin");
+                setError(null);
+              }}
+              className="font-semibold text-accent"
+            >
+              {mode === "signin" ? "가입하기" : "로그인"}
+            </button>
+          </p>
+        )}
 
         <p className="mt-10 text-center text-[12px] text-ink-faint">
           카카오·구글 로그인은 준비 중이에요.
