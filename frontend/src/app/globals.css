@@ -52,6 +52,20 @@ body {
   letter-spacing: -0.02em;
 }
 
+/* 누를 수 있는 것에는 손가락 커서를 되돌린다.
+
+   Tailwind 4 부터 기본값이 바뀌어 button 의 커서가 pointer 가 아니라 default 다.
+   그래서 화면의 모든 버튼이 글자처럼 보인다 — 눌리는지 아닌지 마우스로는 알 수 없다.
+   껐다 켜는 설정이 아니라 기본값 변화라, 여기서 한 번 되돌린다.
+
+   비활성 버튼은 제외한다. 눌리지 않는 것에 손가락을 띄우면 거짓말이 된다. */
+button:not(:disabled),
+[role="button"]:not(:disabled),
+select:not(:disabled),
+summary {
+  cursor: pointer;
+}
+
 /* 키보드 사용자가 지금 어디에 있는지 항상 보이게 한다 */
 :focus-visible {
   outline: 2px solid var(--color-accent);

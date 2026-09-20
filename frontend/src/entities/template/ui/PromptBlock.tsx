@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSession } from "@/shared/auth/SessionProvider";
 import { cn } from "@/shared/lib/cn";
 import { Button, ButtonLink } from "@/shared/ui/Button";
@@ -61,7 +61,7 @@ function Open({ prompt }: { prompt: PublicPrompt }) {
         </Button>
       </div>
 
-      <p className="px-4 py-4 font-mono text-[13px] leading-relaxed text-ink">{prompt.body}</p>
+      <PromptBody text={prompt.body} />
 
       {prompt.negativePrompt && (
         <div className="flex flex-wrap items-center gap-3 border-t border-line px-4 py-3">
@@ -87,6 +87,78 @@ function Open({ prompt }: { prompt: PublicPrompt }) {
         </p>
       )}
     </section>
+  );
+}
+
+/** 접힌 상태에서 보여줄 높이(px). 대략 열두 줄쯤 된다 */
+const COLLAPSED_HEIGHT = 288;
+
+/**
+ * 프롬프트 본문.
+ *
+ * 요즘 프롬프트는 수천 자짜리가 흔하다. 그대로 펼치면 그 아래에 있는 "만들기" 버튼과
+ * 결과 예시가 화면 밖으로 밀려난다. 읽으러 온 사람보다 만들러 온 사람이 많은 자리다.
+ *
+ * 그래서 기본은 접어 둔다. 다만 짧은 프롬프트에까지 "전체 보기"를 붙이면 누를 것도 없는
+ * 버튼이 생기므로, 실제로 넘치는지 재어 보고 넘칠 때만 단다.
+ */
+function PromptBody({ text }: { text: string }) {
+  const ref = useRef<HTMLParagraphElement>(null);
+  const [expanded, setExpanded] = useState(false);
+  const [overflows, setOverflows] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    // 폭이 바뀌면 줄 수가 달라진다. 화면을 돌리거나 창을 줄이는 경우까지 따라간다.
+    const measure = () => {
+      const next = el.scrollHeight > COLLAPSED_HEIGHT + 8;
+      setOverflows((prev) => (prev === next ? prev : next));
+    };
+
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [text]);
+
+  const collapsed = overflows && !expanded;
+
+  return (
+    <>
+      <div className="relative">
+        <p
+          ref={ref}
+          className={cn(
+            "px-4 py-4 font-mono text-[13px] leading-relaxed whitespace-pre-wrap text-ink",
+            collapsed && "overflow-hidden",
+          )}
+          style={collapsed ? { maxHeight: COLLAPSED_HEIGHT } : undefined}
+        >
+          {text}
+        </p>
+
+        {collapsed && (
+          // 잘린 자리를 흐리게 해서 "여기서 끝이 아니다"를 말한다.
+          <div
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-ground to-transparent"
+            aria-hidden
+          />
+        )}
+      </div>
+
+      {overflows && (
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          aria-expanded={expanded}
+          className="w-full border-t border-line px-4 py-3 text-[13px] text-ink-soft transition-colors hover:bg-white/[0.03] hover:text-ink"
+        >
+          {expanded ? "접기" : `전체 보기 · ${text.length.toLocaleString()}자`}
+        </button>
+      )}
+    </>
   );
 }
 

@@ -130,7 +130,7 @@ export function CreateForm({ template }: { template: TemplateDetail }) {
 
         {template.uploadGuide?.checklist && template.uploadGuide.checklist.length > 0 && (
           <details className="group mt-3 rounded-xl border border-line px-4 py-3">
-            <summary className="cursor-pointer list-none text-[13px] font-medium text-accent">
+            <summary className="list-none text-[13px] font-medium text-accent">
               어떤 사진이 잘 나오나요
               <span className="ml-1.5 text-ink-faint group-open:hidden">펼치기</span>
             </summary>
