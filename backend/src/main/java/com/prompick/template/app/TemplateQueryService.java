@@ -58,6 +58,16 @@ public class TemplateQueryService {
                 .toList();
     }
 
+    /**
+     * 홈.
+     *
+     * <p>묶음마다 개수를 자르지 않는다. 열 개로 자르던 시절에는 템플릿이 열한 개가 되는 순간
+     * 가장 오래된 것이 어느 묶음에도 나오지 않고 사라졌다. 공개해 둔 템플릿이 홈에서 안 보이는
+     * 것은 운영자에게도 사용자에게도 사고다.
+     *
+     * <p>템플릿이 수백 개가 되면 다시 생각해야 한다. 그때는 자르는 것이 아니라 묶음 자체를
+     * 다르게 짜야 한다 — 열 개로 자르든 스무 개로 자르든 같은 문제가 되돌아온다.
+     */
     public HomeResponse home() {
         List<HomeResponse.Section> sections = new ArrayList<>();
 
@@ -65,27 +75,28 @@ public class TemplateQueryService {
                 "trending",
                 "이번 주 많이 만든 것",
                 null,
-                templates.findTopTrending(null, Limit.of(10))));
+                templates.findTopTrending(null, Limit.unlimited())));
 
         sections.add(section(
                 "free-prompt",
                 "프롬프트를 바로 받아 가요",
                 "복사해서 쓰던 AI에 그대로 붙여넣으면 돼요",
-                templates.findByPromptAccess(PromptAccess.FREE, Limit.of(10))));
+                templates.findByPromptAccess(PromptAccess.FREE, Limit.unlimited())));
 
         sections.add(section(
                 "free-generate",
                 "무료로 만들어 볼 수 있어요",
                 null,
-                templates.findByGenerateAccess(GenerateAccess.FREE, Limit.of(10))));
+                templates.findByGenerateAccess(GenerateAccess.FREE, Limit.unlimited())));
 
         sections.add(section(
                 "exclusive",
                 "여기서만 만들 수 있어요",
                 "프롬프트를 공개하지 않는 템플릿이에요",
-                templates.findByPromptAccess(PromptAccess.HIDDEN, Limit.of(10))));
+                templates.findByPromptAccess(PromptAccess.HIDDEN, Limit.unlimited())));
 
-        sections.add(section("newest", "새로 올라왔어요", null, templates.findNewest(Limit.of(10))));
+        sections.add(section(
+                "newest", "새로 올라왔어요", null, templates.findNewest(Limit.unlimited())));
 
         // 내용이 없는 섹션은 내려보내지 않는다. 화면에 빈 줄이 생기지 않게.
         return new HomeResponse(sections.stream().filter(s -> !s.items().isEmpty()).toList());
