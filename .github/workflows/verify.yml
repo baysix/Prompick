@@ -5,8 +5,8 @@
 # 하나뿐이다. 배포는 사람이 배포 잠금을 걸고 직접 한다 (docs/06-서버-운영.md).
 #
 # 자동 배포를 붙이지 않은 이유가 있다. 푸시할 때마다 서버가 다시 뜨면 그때 제작 중이던
-# 작업이 끊기고, 10분 뒤 다른 워커가 처음 단계부터 다시 돌린다 - 이미 낸 AI 요금을 한 번
-# 더 내는 셈이다.
+# 작업이 끊기고, 10분 뒤 다른 워커가 처음 단계부터 다시 돌린다 — 이미 낸 AI 요금을
+# 한 번 더 내는 셈이다.
 # =============================================================================
 
 name: 검증
@@ -28,7 +28,7 @@ jobs:
   #
   # 진짜 PostgreSQL 을 띄우고 그 위에서 돌린다. 테스트가 @SpringBootTest 라 DB 없이는
   # 아예 뜨지 않기도 하지만, 그보다 Flyway 가 V1 부터 끝까지 한 번 훑는 것이 크다.
-  # 마이그레이션이 깨진 것은 운영 DB 에 적용되고 나서야 알게 되면 되돌릴 수 없다.
+  # 마이그레이션이 깨진 것은 운영 DB 에 적용되고 나서 알면 되돌릴 수 없다.
   # ---------------------------------------------------------------------------
   backend:
     name: 백엔드
@@ -72,21 +72,30 @@ jobs:
           # Supabase 를 부르지 않는다. 키도 없고, 부를 이유도 없다.
           STORAGE_TYPE: LOCAL
 
-      # 실패했을 때 무엇이 왜 깨졌는지 로그에 바로 찍는다.
+      # 실패했을 때 원인을 로그와 주석 양쪽에 남긴다.
       #
-      # 보고서를 아티팩트로만 남기면 zip 을 받아 열어봐야 알 수 있는데, 대개는 실패한
-      # 테스트 이름과 예외 몇 줄이면 충분하다. 그 몇 줄을 보려고 내려받게 하지 않는다.
+      # 주석으로도 띄우는 이유는, 로그를 열어봐야만 아는 것과 목록에서 바로 보이는 것의
+      # 차이가 크기 때문이다. 대개는 예외 한 줄이면 무엇이 깨졌는지 알 수 있다.
       - name: 실패 원인 찍기
         if: failure()
         working-directory: backend
         run: |
-          echo "::group::실패한 테스트"
-          grep -rl -e "<failure" -e "<error" build/test-results/test/ 2>/dev/null | while read -r f; do
+          echo "::group::테스트 결과 원문"
+          for f in build/test-results/test/*.xml; do
+            [ -e "$f" ] || continue
             echo "--- $f"
             head -c 4000 "$f"
             echo
           done
           echo "::endgroup::"
+
+          for f in build/test-results/test/*.xml; do
+            [ -e "$f" ] || continue
+            if grep -q -e "<failure" -e "<error" "$f"; then
+              msg=$(grep -o 'message="[^"]*"' "$f" | head -3 | tr '\n' ' ')
+              echo "::error title=$(basename "$f")::${msg:-원인 문자열 없음}"
+            fi
+          done
 
       - name: 테스트 보고서 남기기
         if: failure()
@@ -97,3 +106,89 @@ jobs:
             backend/build/reports/tests/test/
             backend/build/test-results/test/
           retention-days: 7
+
+  # ---------------------------------------------------------------------------
+  # 프론트: 타입 + 린트 + 빌드
+  # ---------------------------------------------------------------------------
+  frontend:
+    name: 프론트
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: 의존성 설치
+        working-directory: frontend
+        run: npm ci
+
+      # Next 가 만들어 주는 타입을 먼저 뽑는다.
+      #
+      # layout.tsx 의 LayoutProps 같은 것은 우리가 쓴 타입이 아니라 Next 가 .next/types 에
+      # 생성해 두는 것이고, tsconfig 가 그 폴더를 포함한다. 로컬에는 개발 서버를 돌린 흔적이
+      # 남아 있어 보이지만, 갓 받아온 CI 에는 없어서 "Cannot find name 'LayoutProps'" 로
+      # 넘어진다. typegen 은 전체 빌드 없이 이 타입들만 만든다.
+      - name: 라우트 타입 생성
+        working-directory: frontend
+        run: npx next typegen
+
+      - name: 타입 검사
+        working-directory: frontend
+        run: npx tsc --noEmit
+
+      - name: 린트
+        working-directory: frontend
+        run: npx eslint
+
+      - name: 빌드
+        working-directory: frontend
+        run: npm run build
+        env:
+          # 빌드가 되는지만 보는 것이라 진짜 주소일 필요가 없다. 다만 Next 가 빌드할 때
+          # 이 값들을 코드에 박아 넣으므로, 비어 있으면 형식 오류로 넘어질 수 있어 채운다.
+          NEXT_PUBLIC_API_BASE_URL: https://example.invalid/api/v1
+          NEXT_PUBLIC_SITE_URL: https://example.invalid
+          NEXT_PUBLIC_SUPABASE_URL: https://example.invalid
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ci-placeholder
+
+  # ---------------------------------------------------------------------------
+  # 이미지: 서버에서 실제로 도는 그 모양으로 빌드되는지
+  #
+  # 위 두 작업과 겹쳐 보이지만 다르다. 저쪽은 "코드가 맞는가"를 보고 여기는
+  # "Dockerfile 이 맞는가"를 본다. COPY 경로가 틀렸거나 줄바꿈이 뭉개진 것은
+  # 코드 검사로는 잡히지 않고, 서버에 올려봐야 알게 된다.
+  # ---------------------------------------------------------------------------
+  images:
+    name: 도커 이미지
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: 백엔드 이미지
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          push: false
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,scope=backend,mode=max
+
+      - name: 프론트 이미지
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          push: false
+          build-args: |
+            NEXT_PUBLIC_API_BASE_URL=https://example.invalid/api/v1
+            NEXT_PUBLIC_SITE_URL=https://example.invalid
+            NEXT_PUBLIC_SUPABASE_URL=https://example.invalid
+            NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=ci-placeholder
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,scope=frontend,mode=max
