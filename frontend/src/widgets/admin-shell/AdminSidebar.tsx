@@ -22,6 +22,7 @@ const NAV = [
   { href: "/admin/templates", label: "템플릿" },
   { href: "/admin/ai-models", label: "AI 모델" },
   { href: "/admin/keys", label: "제공사 키" },
+  { href: "/admin/deploy", label: "배포 준비" },
 ];
 
 export function AdminSidebar() {

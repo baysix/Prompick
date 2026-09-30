@@ -4,10 +4,14 @@ import type {
   Job,
   JobStatus,
   PresignedUpload,
+  ServiceStatus,
   UploadCheck,
 } from "../model/types";
 
 export const generationApi = {
+  /** 로그인 없이도 읽힌다. 점검 안내는 로그인 전에 보여야 의미가 있다 */
+  serviceStatus: () => api.get<ServiceStatus>("/service-status"),
+
   freeUsage: () => api.get<FreeUsage>("/me/free-usage"),
 
   presign: (fileName: string, contentType: string) =>
@@ -35,6 +39,7 @@ export const generationApi = {
 
 export const generationKeys = {
   all: ["generation"] as const,
+  serviceStatus: () => [...generationKeys.all, "service-status"] as const,
   freeUsage: () => [...generationKeys.all, "free-usage"] as const,
   job: (jobId: number) => [...generationKeys.all, "job", jobId] as const,
   jobs: (status?: JobStatus) => [...generationKeys.all, "jobs", status ?? "ALL"] as const,

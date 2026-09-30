@@ -24,7 +24,9 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ApiException.class)
     public ResponseEntity<ErrorResponse> handleApiException(ApiException e) {
         ErrorCode code = e.getErrorCode();
-        if (code.getStatus().is5xxServerError()) {
+        // 점검 잠금은 5xx로 답하지만 사고가 아니라 우리가 일부러 막아둔 상태다. 이것까지 error로
+        // 남기면 점검하는 동안 사용자 수만큼 스택트레이스가 쌓여, 정작 진짜 오류가 묻힌다.
+        if (code.getStatus().is5xxServerError() && code != ErrorCode.GENERATION_LOCKED) {
             log.error("API error: {}", code, e);
         } else {
             log.debug("API error: {} - {}", code, e.getMessage());

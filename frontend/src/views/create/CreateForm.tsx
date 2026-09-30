@@ -9,6 +9,7 @@ import {
   generationKeys,
   uploadDirect,
 } from "@/entities/generation/api/generationApi";
+import { useGenerationLock } from "@/entities/generation/lib/useGenerationLock";
 import type { UploadCheck } from "@/entities/generation/model/types";
 import type { TemplateDetail } from "@/entities/template/model/types";
 import { ApiError } from "@/shared/api/client";
@@ -44,6 +45,10 @@ export function CreateForm({ template }: { template: TemplateDetail }) {
     enabled: signedIn,
   });
 
+  // 점검 준비 중인지. 로그인 여부와 상관없이 확인한다. 이 화면을 열어둔 채 사진을 고르고
+  // 있던 사람에게도 곧 전해져야 해서, 훅이 주기적으로 다시 확인한다.
+  const { locked, message: lockMessage } = useGenerationLock();
+
   const example = template.media[0]?.thumbnailUrl ?? template.media[0]?.url ?? null;
   const imageFields = template.inputFields.filter((f) => f.fieldType === "IMAGE");
   const optionFields = template.inputFields.filter((f) => f.fieldType !== "IMAGE");
@@ -74,7 +79,7 @@ export function CreateForm({ template }: { template: TemplateDetail }) {
   const noFreeLeft = isFree && freeUsage != null && freeUsage.remaining <= 0;
   const missing = imageFields.filter((f) => f.required && !values[f.fieldKey]);
   const blocked = Object.values(checks).some((c) => c.status === "BLOCKED");
-  const ready = missing.length === 0 && !blocked && !noFreeLeft;
+  const ready = missing.length === 0 && !blocked && !noFreeLeft && !locked;
 
   return (
     <main className="flex-1 pb-28">
@@ -193,7 +198,11 @@ export function CreateForm({ template }: { template: TemplateDetail }) {
       <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-ground/95 backdrop-blur-xl">
         <div className="mx-auto flex max-w-2xl items-center gap-4 px-4 py-3">
           <div className="min-w-0 flex-1 text-[12px] leading-snug text-ink-soft">
-            {noFreeLeft ? (
+            {locked ? (
+              // 관리자가 적어둔 사유를 그대로 보여준다. "점검 중"이라고만 하면 언제 다시
+              // 오면 되는지 알 수 없어, 대부분 그냥 떠난다.
+lockMessage
+            ) : noFreeLeft ? (
               "오늘 무료 횟수를 다 썼어요. 내일 자정에 다시 채워져요"
             ) : (
               <>
@@ -212,13 +221,15 @@ export function CreateForm({ template }: { template: TemplateDetail }) {
           >
             {create.isPending
               ? "보내는 중"
-              : blocked
-                ? "사진을 바꿔주세요"
-                : noFreeLeft
-                  ? "오늘 무료 횟수를 다 썼어요"
-                  : isFree && freeUsage
-                    ? `${freeUsage.remaining}회 무료 만들기`
-                    : "만들기"}
+              : locked
+                ? "점검 중이에요"
+                : blocked
+                  ? "사진을 바꿔주세요"
+                  : noFreeLeft
+                    ? "오늘 무료 횟수를 다 썼어요"
+                    : isFree && freeUsage
+                      ? `${freeUsage.remaining}회 무료 만들기`
+                      : "만들기"}
           </Button>
         </div>
       </div>

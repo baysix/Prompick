@@ -52,7 +52,10 @@ public class SecurityConfig {
                                 "/api/v1/requests",
                                 // 공지는 로그인 없이 읽는다. 점검 안내는 로그인이 안 되는 상황에서
                                 // 가장 필요한 글인데, 그때 읽으려면 로그인부터 하라고 하면 소용이 없다.
-                                "/api/v1/notices")
+                                "/api/v1/notices",
+                                // 점검 중이라 제작을 안 받는다는 사실도 마찬가지다. 로그인해서
+                                // 사진까지 올린 뒤에 알게 되면 이미 늦다.
+                                "/api/v1/service-status")
                         .permitAll()
                         // 웹훅은 서명으로 검증한다. (포트원, AI 제공사)
                         .requestMatchers("/api/v1/webhooks/**")

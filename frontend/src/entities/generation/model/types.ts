@@ -65,3 +65,14 @@ export interface FreeUsage {
 export function isFinished(status: JobStatus): boolean {
   return status === "SUCCEEDED" || status === "FAILED" || status === "CANCELED";
 }
+
+/**
+ * 지금 제작을 받는지.
+ *
+ * 점검 준비 중이면 만들기 버튼을 미리 막는다. 사진을 다 고르고 버튼을 누른 다음에야
+ * 거절당하면, 그 사람은 자기 사진이 잘못된 줄 알고 몇 번을 다시 시도한다.
+ */
+export type ServiceStatus = {
+  generationLocked: boolean;
+  message: string | null;
+};

@@ -7,6 +7,7 @@ import com.prompick.common.error.ErrorCode;
 import com.prompick.config.PrompickProperties;
 import com.prompick.generation.domain.*;
 import com.prompick.generation.domain.JobRepository;
+import com.prompick.settings.app.ServiceStatusService;
 import com.prompick.template.domain.*;
 import com.prompick.user.domain.User;
 import java.util.ArrayList;
@@ -41,14 +42,17 @@ public class JobService {
     private final UploadService uploads;
     private final FreeUsageService freeUsage;
     private final PrompickProperties properties;
+    private final ServiceStatusService serviceStatus;
 
     public JobService(JobRepository jobs,
             TemplateRepository templates,
             TemplatePipelineRepository pipelines,
             UploadService uploads,
             FreeUsageService freeUsage,
-            PrompickProperties properties, CreditService credits) {
+            PrompickProperties properties, CreditService credits,
+            ServiceStatusService serviceStatus) {
         this.credits = credits;
+        this.serviceStatus = serviceStatus;
         this.jobs = jobs;
         this.templates = templates;
         this.pipelines = pipelines;
@@ -72,6 +76,13 @@ public class JobService {
         if (existing.isPresent()) {
             return existing.get();
         }
+
+        // 점검 준비 중이면 여기서 돌려보낸다.
+        //
+        // 멱등 확인보다 뒤에 두는 이유가 있다. 잠그기 직전에 접수된 요청은 이미 프롬비를 냈고
+        // 작업도 만들어졌다. 그 사용자가 화면을 새로고침하면 같은 키로 다시 들어오는데, 여기서
+        // 막아버리면 자기가 낸 작업을 못 보고 돈만 나간 것처럼 보인다.
+        serviceStatus.requireUnlocked();
 
         Template template = templates
                 .findPublishedBySlug(slug)

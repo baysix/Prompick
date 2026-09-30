@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { generationApi, generationKeys } from "@/entities/generation/api/generationApi";
+import { useGenerationLock } from "@/entities/generation/lib/useGenerationLock";
 import { isFinished, type Job } from "@/entities/generation/model/types";
 import { useSession } from "@/shared/auth/SessionProvider";
 import { cn } from "@/shared/lib/cn";
@@ -150,6 +151,7 @@ function Running({ job }: { job: Job }) {
 }
 
 function Succeeded({ job }: { job: Job }) {
+  const { locked } = useGenerationLock();
   const output = job.outputs[0];
 
   return (
@@ -167,11 +169,20 @@ function Succeeded({ job }: { job: Job }) {
 
       <div className="mt-5 flex flex-wrap gap-2">
         {output && <DownloadButton jobId={job.id} />}
-        {job.templateSlug && (
-          <ButtonLink href={`/t/${job.templateSlug}/create`} variant="secondary" size="lg">
-            다시 만들기
-          </ButtonLink>
-        )}
+        {/*
+          점검 중에는 눌러도 막히는 곳으로 보내지 않는다. 내려받기는 그대로 둔다 —
+          제작만 멈춘 것이지 이미 만들어진 결과물까지 잠근 것은 아니다.
+        */}
+        {job.templateSlug &&
+          (locked ? (
+            <Button variant="secondary" size="lg" disabled>
+              점검 중이에요
+            </Button>
+          ) : (
+            <ButtonLink href={`/t/${job.templateSlug}/create`} variant="secondary" size="lg">
+              다시 만들기
+            </ButtonLink>
+          ))}
         <ButtonLink href="/explore" variant="ghost" size="lg">
           다른 것도 보기
         </ButtonLink>
@@ -187,6 +198,7 @@ function Succeeded({ job }: { job: Job }) {
 
 function Failed({ job }: { job: Job }) {
   const timedOut = job.errorCode === "GENERATION_TIMEOUT";
+  const { locked } = useGenerationLock();
 
   return (
     <div className="mt-6">
@@ -203,11 +215,16 @@ function Failed({ job }: { job: Job }) {
       </div>
 
       <div className="mt-5 flex flex-wrap gap-2">
-        {job.templateSlug && (
-          <ButtonLink href={`/t/${job.templateSlug}/create`} size="lg">
-            다시 해보기
-          </ButtonLink>
-        )}
+        {job.templateSlug &&
+          (locked ? (
+            <Button size="lg" disabled>
+              점검 중이에요
+            </Button>
+          ) : (
+            <ButtonLink href={`/t/${job.templateSlug}/create`} size="lg">
+              다시 해보기
+            </ButtonLink>
+          ))}
         <ButtonLink href="/help" variant="secondary" size="lg">
           도움말
         </ButtonLink>

@@ -37,6 +37,9 @@ public enum ErrorCode {
     FREE_LIMIT_EXCEEDED(HttpStatus.FORBIDDEN, "오늘 무료 제작 횟수를 모두 사용했어요."),
 
     // 생성
+    // 점검 준비 중이라 일부러 막아둔 상태다. 503으로 답해야 크롤러와 모니터링이 "장애"가 아니라
+    // "지금은 안 받는다"로 읽는다. 사유는 관리자가 적어둔 말로 덮어쓴다.
+    GENERATION_LOCKED(HttpStatus.SERVICE_UNAVAILABLE, "잠시 점검 중이라 제작을 받지 않아요. 곧 다시 열려요."),
     GENERATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "제작에 실패했어요. 사용한 프롬비는 돌려드렸어요."),
     GENERATION_TIMEOUT(HttpStatus.INTERNAL_SERVER_ERROR, "제작 시간이 너무 오래 걸려 중단했어요."),
 

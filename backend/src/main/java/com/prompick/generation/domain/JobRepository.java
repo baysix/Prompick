@@ -17,6 +17,9 @@ public interface JobRepository extends JpaRepository<GenerationJob, Long> {
     /** 이 템플릿으로 만든 작업 수. 템플릿을 지워도 되는지 판단할 때 쓴다 */
     long countByTemplateId(Long templateId);
 
+    /** 이 상태인 작업 수. 배포해도 되는지(대기·진행이 0인지) 볼 때 쓴다 */
+    long countByStatus(JobStatus status);
+
     Optional<GenerationJob> findByIdAndUserId(Long id, Long userId);
 
     List<GenerationJob> findByUserIdOrderByIdDesc(Long userId, Limit limit);

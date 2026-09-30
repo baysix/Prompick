@@ -7,6 +7,7 @@ import { useSession } from "@/shared/auth/SessionProvider";
 import { SIGNUP_OPEN } from "@/shared/config/env";
 import { cn } from "@/shared/lib/cn";
 import { ButtonLink } from "@/shared/ui/Button";
+import { MaintenanceBanner } from "./MaintenanceBanner";
 
 /**
  * 상단바.
@@ -31,6 +32,9 @@ const NAV = [
 export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-line bg-ground/90 backdrop-blur-xl">
+      {/* 점검 중일 때만 나타난다. 평소에는 아무 자리도 차지하지 않는다 */}
+      <MaintenanceBanner />
+
       <div className="mx-auto grid h-16 max-w-[1280px] grid-cols-[1fr_auto_1fr] items-center gap-4 px-4">
         <Link href="/" className="flex items-center gap-2 justify-self-start" aria-label="프롬픽">
           <Logo />

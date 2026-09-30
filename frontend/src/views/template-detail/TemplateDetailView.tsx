@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { generationApi, generationKeys } from "@/entities/generation/api/generationApi";
+import { useGenerationLock } from "@/entities/generation/lib/useGenerationLock";
 import { isPlayableVideo } from "@/entities/template/lib/media";
 import { PromptBlock } from "@/entities/template/ui/PromptBlock";
 import type { TemplateDetail } from "@/entities/template/model/types";
@@ -43,6 +44,7 @@ export function TemplateDetailView({ template }: { template: TemplateDetail }) {
   });
 
   const outOfFree = free && freeUsage != null && freeUsage.remaining <= 0;
+  const { locked } = useGenerationLock();
 
   /**
    * 버튼에 적을 말.
@@ -53,15 +55,17 @@ export function TemplateDetailView({ template }: { template: TemplateDetail }) {
    *
    * 로그인 전에는 횟수를 모른다. 그때는 무료라는 것만 알린다.
    */
-  const actionLabel = !free
-    ? "만들기"
-    : !signedIn
-      ? "무료로 만들기"
-      : freeUsage == null
-        ? "만들기"
-        : freeUsage.remaining > 0
-          ? `${freeUsage.remaining}회 무료 만들기`
-          : "오늘 무료 횟수를 다 썼어요";
+  const actionLabel = locked
+    ? "점검 중이에요"
+    : !free
+      ? "만들기"
+      : !signedIn
+        ? "무료로 만들기"
+        : freeUsage == null
+          ? "만들기"
+          : freeUsage.remaining > 0
+            ? `${freeUsage.remaining}회 무료 만들기`
+            : "오늘 무료 횟수를 다 썼어요";
 
   function startCreate() {
     const target = `/t/${template.slug}/create`;
@@ -234,14 +238,15 @@ export function TemplateDetailView({ template }: { template: TemplateDetail }) {
           <div className="min-w-0 flex-1">
             <p className="truncate text-[13px] font-medium text-ink">{template.title}</p>
             <p className="text-[12px] text-ink-faint">
-              {free ? "무료" : `🪙 ${template.generateCost.toLocaleString()}`} · 약{" "}
-              {Math.round(template.estimatedSeconds / 60)}분
+              {locked
+                ? "지금은 제작을 받지 않아요"
+                : `${free ? "무료" : `🪙 ${template.generateCost.toLocaleString()}`} · 약 ${Math.round(template.estimatedSeconds / 60)}분`}
             </p>
           </div>
           <Button
             size="lg"
             onClick={startCreate}
-            disabled={loading || outOfFree}
+            disabled={loading || outOfFree || locked}
             className="shrink-0"
           >
             {actionLabel}
