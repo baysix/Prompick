@@ -29,6 +29,13 @@ FROM eclipse-temurin:25-jre
 WORKDIR /app
 COPY --from=build /app/build/libs/*.jar app.jar
 
+# 살아 있는지 물어볼 도구.
+#
+# temurin 이미지는 최소 구성이라 wget 도 curl 도 들어있지 않다. 이것 없이 헬스체크를
+# 걸면 애플리케이션은 멀쩡한데 "실행 파일 없음"으로 계속 실패하고, 컨테이너가 영원히
+# unhealthy 로 남아 이 컨테이너를 기다리는 쪽이 뜨지 못한다.
+RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
+
 # 루트로 돌리지 않는다. 컨테이너가 뚫렸을 때 할 수 있는 일을 줄인다.
 # 힙 덤프를 쓸 자리도 미리 만들어 둔다 — 죽고 나서 만들 수는 없다.
 RUN useradd --system --uid 1001 prompick \

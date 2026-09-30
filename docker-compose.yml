@@ -62,7 +62,7 @@ services:
       - .env
     healthcheck:
       # 살아 있는지 확인한다. 이게 통과해야 web 이 뜨고, 죽으면 도커가 다시 세운다.
-      test: ["CMD", "wget", "-qO-", "http://localhost:8080/actuator/health"]
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/actuator/health"]
       interval: 15s
       timeout: 5s
       # 처음 뜨는 데 10~20초 걸린다. 그동안은 실패로 치지 않는다.
