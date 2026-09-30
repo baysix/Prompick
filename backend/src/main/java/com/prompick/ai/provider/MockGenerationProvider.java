@@ -65,15 +65,13 @@ public class MockGenerationProvider implements GenerationProvider {
     }
 
     @Override
-    public byte[] fetchResult(String externalJobId) {
+    public ResultStream openResult(String externalJobId) {
         Job job = jobs.get(externalJobId);
         String label = job == null ? "결과" : shortLabel(job.request());
-        return MockMedia.placeholderSvg(label).getBytes(java.nio.charset.StandardCharsets.UTF_8);
-    }
-
-    @Override
-    public String resultContentType(String externalJobId) {
-        return "image/svg+xml";
+        byte[] bytes =
+                MockMedia.placeholderSvg(label).getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        return new ResultStream(
+                new java.io.ByteArrayInputStream(bytes), "image/svg+xml", bytes.length);
     }
 
     /** 결과 이미지에 적을 짧은 문구. 내부 프롬프트를 그대로 쓰지 않는다. */

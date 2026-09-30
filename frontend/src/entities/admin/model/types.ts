@@ -59,10 +59,20 @@ export interface AiModel {
 }
 
 export interface ParamSpec {
-  type: "select" | "number" | "text";
+  /**
+   * video: 레퍼런스 영상. 제작의 바탕이 되는 영상을 관리자가 올린다.
+   *
+   * 영상을 다시 짓는 모델(Genjutsu 등)에 쓴다. 사용자가 올리는 것이 아니라 템플릿이
+   * 가지는 값이라 여기, 지시문 바로 옆에 둔다. 이렇게 해야 원가가 템플릿마다 고정된다 —
+   * 그런 모델은 결과가 아니라 입력 영상의 길이로 요금을 매긴다.
+   */
+  type: "select" | "number" | "text" | "video";
   options?: string[];
   min?: number;
   max?: number;
+  /** 화면에 보일 이름. 없으면 키를 그대로 쓴다 */
+  label?: string;
+  hint?: string;
 }
 
 export interface AdminTemplate {
@@ -86,8 +96,9 @@ export interface AdminTemplate {
   uploadGuide: { checklist?: string[]; resultNote?: string };
   tags: string[];
   pinned: boolean;
-  hasPublicPrompt: boolean;
   hasActivePipeline: boolean;
+  /** 레퍼런스 영상 등록 여부. 영상 템플릿은 이게 없으면 제작이 시작되지 않는다 */
+  hasReferenceVideo: boolean;
   mediaCount: number;
   generationCount: number;
 }
@@ -156,12 +167,6 @@ export function toFormValues(t: AdminTemplate): TemplateFormValues {
   };
 }
 
-export interface PublicPromptForm {
-  body: string;
-  negativePrompt: string | null;
-  recommendedTool: string | null;
-  usageTip: string | null;
-}
 
 /** 파이프라인 한 단계 */
 export interface PipelineStepView {
@@ -403,3 +408,37 @@ export interface AdminBugReport {
   createdAt: string;
   updatedAt: string;
 }
+
+
+/* --- 레퍼런스 영상 --- */
+
+/**
+ * 영상 템플릿이 바탕으로 쓰는 영상.
+ *
+ * 예시 결과물과 정반대다 — 예시는 이 템플릿이 만들어내는 것이고, 레퍼런스는 만들 때 쓰는
+ * 재료다. 템플릿마다 하나뿐이고, 바뀌면 제작 결과가 통째로 달라진다.
+ */
+export interface ReferenceVideo {
+  videoKey: string | null;
+  previewKey: string | null;
+  posterKey: string | null;
+  videoUrl: string | null;
+  previewUrl: string | null;
+  posterUrl: string | null;
+}
+
+/**
+ * 배포 준비 상태.
+ *
+ * safeToDeploy 는 세 가지가 모두 맞을 때만 참이다 — 잠겨 있고, 대기 중인 작업이 없고,
+ * 돌고 있는 작업도 없을 때. 잠그지 않은 채 대기열만 빈 것은 다음 순간 다시 찰 수 있어
+ * 배포해도 된다는 뜻이 되지 못한다.
+ */
+export type DeployStatus = {
+  locked: boolean;
+  message: string | null;
+  lockedAt: string | null;
+  queuedJobs: number;
+  runningJobs: number;
+  safeToDeploy: boolean;
+};

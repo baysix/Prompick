@@ -105,6 +105,18 @@ prompick:
     max-size-mb: 10
     allowed-mime-types: image/jpeg,image/png,image/webp
 
+    # 영상은 사진과 따로 둔다. 크기도 자릿수가 다르고, 무엇보다 길이가 곧 요금이라
+    # 사진과 같은 규칙으로 다룰 수 없다.
+    video:
+      max-size-mb: ${UPLOAD_VIDEO_MAX_MB:200}
+      # mp4·mov 만 받는다. 서버가 길이를 직접 재려면 읽을 수 있는 형식이어야 하고,
+      # 길이를 모르는 영상은 얼마가 나갈지 모르는 호출이 된다.
+      allowed-mime-types: video/mp4,video/quicktime
+      # Genjutsu 가 받는 범위(4~30초)다. 위쪽은 원가 상한이기도 하다 —
+      # 30초 720p 한 번이 2만원을 넘는다.
+      min-seconds: ${UPLOAD_VIDEO_MIN_SECONDS:4}
+      max-seconds: ${UPLOAD_VIDEO_MAX_SECONDS:30}
+
   storage:
     # LOCAL: 로컬 디스크(오프라인 개발용) / SUPABASE: Supabase Storage
     type: ${STORAGE_TYPE:SUPABASE}

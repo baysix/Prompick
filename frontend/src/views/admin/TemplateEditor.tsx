@@ -18,18 +18,38 @@ import { Card, Field, Input, Select, Textarea, Toggle } from "@/widgets/admin-sh
 import { ExposureWarning } from "./ExposureWarning";
 import { MediaEditor } from "./MediaEditor";
 import { PipelineEditor } from "./PipelineEditor";
-import { PublicPromptEditor } from "./PublicPromptEditor";
+import { ReferenceVideoEditor } from "./ReferenceVideoEditor";
 
 /**
  * 템플릿 편집.
  *
- * 한 템플릿에는 성격이 다른 네 덩어리가 붙는다 — 설명과 요금, 사용자에게 줄 프롬프트,
- * 우리가 돌릴 파이프라인, 예시 결과물. 한 화면에 세로로 쌓으면 스크롤만 길어지고
+ * 한 템플릿에는 성격이 다른 덩어리들이 붙는다. 한 화면에 세로로 쌓으면 스크롤만 길어지고
  * 무엇이 빠졌는지 안 보여서 탭으로 나눈다.
  *
- * 새 템플릿은 기본 정보부터 저장해야 한다. 나머지 셋은 모두 템플릿 id에 매달리기 때문이다.
+ * <p>이미지와 영상은 만드는 방식이 달라서 탭 구성도 다르다.
+ *
+ * <pre>
+ * 이미지   기본 정보 · 파이프라인 · 예시
+ * 영상     기본 정보 · 레퍼런스 영상 · 파이프라인
+ * </pre>
+ *
+ * <p>공개 프롬프트 탭은 없다. 사용자에게 보여줄 프롬프트는 파이프라인의 지시문 그대로이고,
+ * 공개할지 말지는 기본 정보의 요금 설정이 정한다. 예전에는 공개용 원문을 따로 적게 했는데,
+ * 같아야 한다는 것을 지켜주는 장치가 없어 며칠 만에 어긋났다 — 사용자는 그동안 실제로 쓰이지
+ * 않는 프롬프트를 복사해 갔다.
+ *
+ * <p>영상에 예시 탭이 없는 이유: 레퍼런스 영상이 곧 예시다. "이 영상에 네 얼굴을 넣어준다"가
+ * 이 템플릿의 설명 전부라, 같은 영상을 예시로 한 번 더 올리게 하는 것은 같은 일을 두 번
+ * 시키는 것이다.
+ *
+ * <p>이미지에 레퍼런스 영상이 없는 이유: 바탕으로 쓸 영상이 없다. 사진에서 새로 그린다.
+ *
+ * 새 템플릿은 종류부터 고른다. 그 선택이 탭 구성과 준비할 것을 통째로 바꾸는데, 폼 중간의
+ * 드롭다운에 묻어두면 다 적고 나서야 엉뚱한 것을 만들고 있었음을 알게 된다.
+ *
+ * 그다음 기본 정보를 저장해야 나머지 탭이 열린다. 전부 템플릿 id에 매달리기 때문이다.
  */
-type Tab = "basic" | "prompt" | "pipeline" | "media";
+type Tab = "basic" | "reference" | "pipeline" | "media";
 
 /** 쓰는 결과물 비율 */
 const RATIOS = ["9:16", "2:3", "3:4", "4:5", "1:1", "16:9"];
@@ -38,6 +58,8 @@ export function TemplateEditor({ templateId }: { templateId: number | null }) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<Tab>("basic");
+  // 새 템플릿에서만 쓴다. 고르기 전에는 나머지 화면을 보여주지 않는다.
+  const [picked, setPicked] = useState<ContentType | null>(null);
   const [draft, setDraft] = useState<TemplateFormValues | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -67,22 +89,47 @@ export function TemplateEditor({ templateId }: { templateId: number | null }) {
     return <p className="text-[13px] text-ink-faint">불러오는 중</p>;
   }
 
+  if (templateId === null && picked === null) {
+    return <TypePicker onPick={(type) => {
+      setPicked(type);
+      setDraft({
+        ...EMPTY_TEMPLATE_FORM,
+        contentType: type,
+        // 영상은 프롬프트를 팔 수 없다. 레퍼런스 영상 없이는 그 지시문이 아무 쓸모가 없다.
+        promptAccess: type === "VIDEO" ? "HIDDEN" : EMPTY_TEMPLATE_FORM.promptAccess,
+      });
+    }} />;
+  }
+
   const form = draft ?? (template ? toFormValues(template) : EMPTY_TEMPLATE_FORM);
   const set = (patch: Partial<TemplateFormValues>) => setDraft({ ...form, ...patch });
 
-  const TABS: { key: Tab; label: string; ready?: boolean }[] = [
-    { key: "basic", label: "기본 정보" },
-    { key: "prompt", label: "공개 프롬프트", ready: template?.hasPublicPrompt },
-    { key: "pipeline", label: "파이프라인", ready: template?.hasActivePipeline },
-    { key: "media", label: "예시", ready: (template?.mediaCount ?? 0) > 0 },
-  ];
+  const isVideo = form.contentType === "VIDEO";
+
+  // 영상은 레퍼런스 영상이 곧 예시다. 같은 영상을 예시로 한 번 더 올리게 하지 않는다.
+  const TABS: { key: Tab; label: string; ready?: boolean }[] = isVideo
+    ? [
+        { key: "basic", label: "기본 정보" },
+        { key: "reference", label: "레퍼런스 영상", ready: template?.hasReferenceVideo },
+        { key: "pipeline", label: "파이프라인", ready: template?.hasActivePipeline },
+      ]
+    : [
+        { key: "basic", label: "기본 정보" },
+        { key: "pipeline", label: "파이프라인", ready: template?.hasActivePipeline },
+        { key: "media", label: "예시", ready: (template?.mediaCount ?? 0) > 0 },
+      ];
+
+  // 종류를 바꾸면 없던 탭이 생기고 있던 탭이 사라진다. 사라진 탭에 남아 있으면
+  // 화면이 비어버리므로 기본 정보로 돌려보낸다.
+  const visible = TABS.some((t) => t.key === tab);
+  const current = visible ? tab : "basic";
 
   return (
     <div className="max-w-4xl space-y-5">
       {template && (
         <ExposureWarning
           template={template}
-          templateId={tab === "basic" ? null : template.id}
+          templateId={current === "basic" ? null : template.id}
         />
       )}
 
@@ -98,7 +145,7 @@ export function TemplateEditor({ templateId }: { templateId: number | null }) {
               title={locked ? "기본 정보를 먼저 저장해주세요" : undefined}
               className={cn(
                 "-mb-px flex items-center gap-1.5 border-b-2 px-3.5 py-2.5 text-[14px] transition-colors",
-                tab === t.key
+                current === t.key
                   ? "border-accent font-semibold text-ink"
                   : "border-transparent text-ink-soft hover:text-ink",
                 locked && "opacity-40",
@@ -116,7 +163,7 @@ export function TemplateEditor({ templateId }: { templateId: number | null }) {
         })}
       </nav>
 
-      {tab === "basic" && (
+      {current === "basic" && (
         <BasicForm
           form={form}
           set={set}
@@ -127,14 +174,72 @@ export function TemplateEditor({ templateId }: { templateId: number | null }) {
         />
       )}
 
-      {tab === "prompt" && templateId !== null && (
-        <PublicPromptEditor templateId={templateId} promptAccess={form.promptAccess} />
+      {current === "reference" && templateId !== null && (
+        <ReferenceVideoEditor templateId={templateId} />
       )}
 
-      {tab === "pipeline" && templateId !== null && <PipelineEditor templateId={templateId} />}
+      {current === "pipeline" && templateId !== null && <PipelineEditor templateId={templateId} />}
 
-      {tab === "media" && templateId !== null && <MediaEditor templateId={templateId} />}
+      {current === "media" && templateId !== null && <MediaEditor templateId={templateId} />}
     </div>
+  );
+}
+
+/**
+ * 무엇을 만드는 템플릿인가.
+ *
+ * 이름만 고르게 하지 않고 준비물을 함께 적는다. 종류에 따라 미리 있어야 하는 것이 다른데,
+ * 그것을 모르고 시작하면 절반쯤 적다가 멈추게 된다.
+ */
+function TypePicker({ onPick }: { onPick: (type: ContentType) => void }) {
+  const options: {
+    type: ContentType;
+    label: string;
+    summary: string;
+    needs: string[];
+  }[] = [
+    {
+      type: "IMAGE",
+      label: "이미지",
+      summary: "사용자가 올린 사진으로 그림을 새로 만들어요.",
+      needs: ["지시문", "예시 결과물", "(원하면) 사용자에게 줄 프롬프트"],
+    },
+    {
+      type: "VIDEO",
+      label: "영상",
+      summary: "이미 찍힌 영상에서 인물이나 배경만 갈아 끼워요.",
+      needs: ["레퍼런스 영상", "목록에서 재생할 가벼운 영상", "무엇을 바꿀지 적은 지시문"],
+    },
+  ];
+
+  return (
+    <Card
+      title="무엇을 만드는 템플릿인가요"
+      description="고른 뒤에는 바꿀 수 있지만, 준비할 것이 달라서 먼저 정하는 편이 좋아요."
+    >
+      <div className="grid gap-3 sm:grid-cols-2">
+        {options.map((option) => (
+          <button
+            key={option.type}
+            type="button"
+            onClick={() => onPick(option.type)}
+            className="rounded-xl border border-line p-5 text-left transition-colors hover:border-ink-faint hover:bg-white/3"
+          >
+            <p className="text-[16px] font-semibold text-ink">{option.label}</p>
+            <p className="mt-1.5 text-[13px] leading-relaxed text-ink-soft">{option.summary}</p>
+
+            <p className="mt-4 text-[12px] text-ink-faint">필요한 것</p>
+            <ul className="mt-1 space-y-0.5">
+              {option.needs.map((need) => (
+                <li key={need} className="text-[13px] text-ink-soft">
+                  · {need}
+                </li>
+              ))}
+            </ul>
+          </button>
+        ))}
+      </div>
+    </Card>
   );
 }
 

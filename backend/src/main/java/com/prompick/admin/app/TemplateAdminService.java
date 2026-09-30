@@ -19,19 +19,16 @@ public class TemplateAdminService {
 
     private final TemplateRepository templates;
     private final CategoryRepository categories;
-    private final TemplatePublicPromptRepository prompts;
     private final TemplatePipelineRepository pipelines;
     private final JobRepository jobs;
 
     public TemplateAdminService(
             TemplateRepository templates,
             CategoryRepository categories,
-            TemplatePublicPromptRepository prompts,
             TemplatePipelineRepository pipelines,
             JobRepository jobs) {
         this.templates = templates;
         this.categories = categories;
-        this.prompts = prompts;
         this.pipelines = pipelines;
         this.jobs = jobs;
     }
@@ -90,16 +87,24 @@ public class TemplateAdminService {
     public AdminTemplateResponse publish(Long id) {
         Template template = find(id);
 
-        if (template.getMedia().isEmpty()) {
-            throw new ApiException(ErrorCode.INVALID_REQUEST, "예시 결과물을 먼저 등록해주세요.");
+        // 영상 템플릿은 레퍼런스 영상이 곧 예시다. 같은 영상을 두 번 올리게 할 이유가 없다.
+        boolean hasReference =
+                template.getReferenceVideoKey() != null
+                        && !template.getReferenceVideoKey().isBlank();
+
+        if (template.getMedia().isEmpty() && !hasReference) {
+            throw new ApiException(
+                    ErrorCode.INVALID_REQUEST,
+                    template.getContentType() == com.prompick.template.domain.ContentType.VIDEO
+                            ? "레퍼런스 영상을 먼저 등록해주세요."
+                            : "예시 결과물을 먼저 등록해주세요.");
         }
         if (pipelines.findByTemplateIdAndActiveTrue(id).isEmpty()) {
             throw new ApiException(ErrorCode.INVALID_REQUEST, "활성 파이프라인이 없어요. 제작이 불가능해요.");
         }
-        if (template.isPromptDisclosed() && prompts.findByTemplateId(id).isEmpty()) {
-            throw new ApiException(
-                    ErrorCode.INVALID_REQUEST, "프롬프트를 제공하기로 했는데 원문이 없어요.");
-        }
+        // 공개할 프롬프트는 파이프라인의 지시문이다. 위에서 이미 활성 파이프라인을 확인했으므로
+        // 여기서 따로 볼 것이 없다. 예전에는 공개용 원문을 따로 적게 했는데, 같아야 한다는 것을
+        // 지켜주는 장치가 없어 며칠 만에 어긋났다.
 
         template.publish();
         return toResponse(template);
@@ -178,8 +183,6 @@ public class TemplateAdminService {
 
     private AdminTemplateResponse toResponse(Template t) {
         return AdminTemplateResponse.of(
-                t,
-                prompts.findByTemplateId(t.getId()).isPresent(),
-                pipelines.findByTemplateIdAndActiveTrue(t.getId()).isPresent());
+                t, pipelines.findByTemplateIdAndActiveTrue(t.getId()).isPresent());
     }
 }

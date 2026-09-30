@@ -1,8 +1,10 @@
 import { api } from "@/shared/api/client";
 import type {
+  ReferenceVideo,
   AdminBugReport,
   AdminNotice,
   BugReportStatus,
+  DeployStatus,
   NoticeForm,
   AdminTemplate,
   AiModel,
@@ -20,7 +22,6 @@ import type {
   ProviderKey,
   RequestTemplateOption,
   ProviderKeyList,
-  PublicPromptForm,
   TemplateMediaItem,
 } from "../model/types";
 
@@ -39,10 +40,6 @@ export const adminApi = {
 
   /** 되돌릴 수 없다. 제작 내역이 있는 템플릿은 서버가 거절한다 */
   deleteTemplate: (id: number) => api.delete<void>(`/admin/templates/${id}`),
-
-  publicPrompt: (id: number) => api.get<PublicPromptForm>(`/admin/templates/${id}/public-prompt`),
-  savePublicPrompt: (id: number, form: PublicPromptForm) =>
-    api.put<PublicPromptForm>(`/admin/templates/${id}/public-prompt`, form),
 
   /** 파이프라인에서 고를 수 있는 모델 (켜둔 것만) */
   models: (capability?: Capability) =>
@@ -104,7 +101,16 @@ export const adminApi = {
   presignMedia: (templateId: number, body: { fileName: string; contentType: string }) =>
     api.post<PresignedUpload>(`/admin/templates/${templateId}/media/presign`, body),
 
-  registerMedia: (templateId: number, body: { storageKey: string }) =>
+  /**
+   * 올린 파일을 예시로 연결한다.
+   *
+   * 영상은 세 벌이다 — 제작에 쓰는 원본, 목록에서 자동재생할 가벼운 미리보기,
+   * 영상이 뜨기 전에 보일 첫 장면. 그림은 원본 하나면 된다.
+   */
+  registerMedia: (
+    templateId: number,
+    body: { storageKey: string; previewKey?: string; thumbnailKey?: string },
+  ) =>
     api.post<TemplateMediaItem>(`/admin/templates/${templateId}/media`, body),
 
   deleteMedia: (templateId: number, mediaId: number) =>
@@ -124,7 +130,24 @@ export const adminApi = {
   activatePipeline: (templateId: number, pipelineId: number) =>
     api.post<Pipeline>(`/admin/templates/${templateId}/pipelines/${pipelineId}/activate`),
 
+  // --- 레퍼런스 영상 (영상 템플릿) ---
+  referenceVideo: (templateId: number) =>
+    api.get<ReferenceVideo>(`/admin/templates/${templateId}/reference-video`),
+
+  saveReferenceVideo: (
+    templateId: number,
+    body: { videoKey: string; previewKey?: string; posterKey?: string },
+  ) => api.put<ReferenceVideo>(`/admin/templates/${templateId}/reference-video`, body),
+
+  clearReferenceVideo: (templateId: number) =>
+    api.delete<void>(`/admin/templates/${templateId}/reference-video`),
+
   // --- 공지사항 ---
+  deployStatus: () => api.get<DeployStatus>("/admin/service-status"),
+  lockGeneration: (message: string) =>
+    api.post<DeployStatus>("/admin/service-status/lock", { message }),
+  unlockGeneration: () => api.post<DeployStatus>("/admin/service-status/unlock"),
+
   notices: () => api.get<AdminNotice[]>("/admin/notices"),
   createNotice: (form: NoticeForm) => api.post<AdminNotice>("/admin/notices", form),
   updateNotice: (id: number, form: NoticeForm) =>
@@ -145,7 +168,6 @@ export const adminKeys = {
   templates: () => [...adminKeys.all, "templates"] as const,
   template: (id: number) => [...adminKeys.all, "template", id] as const,
   templateBySlug: (slug: string) => [...adminKeys.all, "template-slug", slug] as const,
-  publicPrompt: (id: number) => [...adminKeys.all, "public-prompt", id] as const,
   models: () => [...adminKeys.all, "models"] as const,
   providerKeys: () => [...adminKeys.all, "provider-keys"] as const,
   users: (q?: string) => [...adminKeys.all, "users", q ?? ""] as const,
@@ -158,6 +180,9 @@ export const adminKeys = {
   pipelines: (templateId: number) => [...adminKeys.all, "pipelines", templateId] as const,
   inputFields: (templateId: number) => [...adminKeys.all, "input-fields", templateId] as const,
   media: (templateId: number) => [...adminKeys.all, "media", templateId] as const,
+  referenceVideo: (templateId: number) =>
+    [...adminKeys.all, "reference-video", templateId] as const,
   notices: () => [...adminKeys.all, "notices"] as const,
+  deployStatus: () => [...adminKeys.all, "deploy-status"] as const,
   bugReports: (status?: string) => [...adminKeys.all, "bug-reports", status ?? "ALL"] as const,
 };

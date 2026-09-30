@@ -140,14 +140,20 @@ public class OpenAiImageProvider implements GenerationProvider {
         return call.future().isCompletedExceptionally() ? StepStatus.FAILED : StepStatus.SUCCEEDED;
     }
 
+    /**
+     * 결과를 연다.
+     *
+     * <p>이 제공사는 이미지를 JSON 안에 base64 로 실어 보내므로, 여기 오는 시점에는 이미
+     * 메모리에 다 들어와 있다. 스트림으로 감싸기만 한다 — 영상처럼 큰 것을 받는 제공사에서만
+     * 실제로 흘려보내는 값어치가 생긴다.
+     */
     @Override
-    public byte[] fetchResult(String externalJobId) {
-        return resultOf(externalJobId).bytes();
-    }
-
-    @Override
-    public String resultContentType(String externalJobId) {
-        return resultOf(externalJobId).contentType();
+    public ResultStream openResult(String externalJobId) {
+        Result result = resultOf(externalJobId);
+        return new ResultStream(
+                new java.io.ByteArrayInputStream(result.bytes()),
+                result.contentType(),
+                result.bytes().length);
     }
 
     /**

@@ -27,14 +27,35 @@ public interface GenerationProvider {
     StepStatus poll(String externalJobId);
 
     /**
-     * 완성된 결과 파일을 가져온다.
+     * 완성된 결과를 연다. 외부 URL은 대개 만료되므로 받는 즉시 우리 스토리지로 옮긴다.
      *
-     * <p>외부 URL은 대개 만료되므로, 받아서 우리 스토리지로 옮긴 뒤 그 키를 돌려준다.
+     * <p>바이트 배열이 아니라 스트림으로 돌려주는 이유가 있다. 영상은 수십 MB가 흔한데, 통째로
+     * 메모리에 올리면 512MB 컨테이너는 그대로 죽는다. 이미지만 다루던 시절에는 버텼지만 그때도
+     * 아슬아슬했다.
+     *
+     * <p>호출자가 닫는다.
      */
-    byte[] fetchResult(String externalJobId);
+    ResultStream openResult(String externalJobId);
 
-    /** 결과 파일의 형식 (image/png, video/mp4 등) */
-    String resultContentType(String externalJobId);
+    /**
+     * 열린 결과.
+     *
+     * @param contentType image/png, video/mp4 등
+     * @param contentLength 바이트 수. 제공사가 알려주지 않으면 -1. 그 경우 호출자가 임시 파일로
+     *     받아 길이를 확정한다 — 역시 메모리에는 담지 않는다.
+     */
+    record ResultStream(java.io.InputStream content, String contentType, long contentLength)
+            implements AutoCloseable {
+
+        @Override
+        public void close() {
+            try {
+                content.close();
+            } catch (java.io.IOException ignored) {
+                // 이미 다 받은 뒤다. 닫다 난 오류로 제작을 실패시킬 이유가 없다.
+            }
+        }
+    }
 
     /**
      * 키가 살아 있는지 확인한다.

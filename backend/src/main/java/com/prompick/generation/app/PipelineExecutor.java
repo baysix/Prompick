@@ -11,7 +11,11 @@ import com.prompick.generation.domain.UploadRepository;
 import com.prompick.storage.StorageService;
 import com.prompick.template.domain.ContentType;
 import com.prompick.template.domain.TemplatePipeline;
-import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
@@ -51,6 +55,7 @@ public class PipelineExecutor {
     private final JobStepRepository steps;
     private final OutputRepository outputs;
     private final UploadRepository uploads;
+    private final com.prompick.template.domain.TemplateRepository templates;
     private final StorageService storage;
     private final PrompickProperties properties;
 
@@ -60,6 +65,7 @@ public class PipelineExecutor {
             JobStepRepository steps,
             OutputRepository outputs,
             UploadRepository uploads,
+            com.prompick.template.domain.TemplateRepository templates,
             StorageService storage,
             PrompickProperties properties) {
         this.providers = new HashMap<>();
@@ -68,6 +74,7 @@ public class PipelineExecutor {
         this.steps = steps;
         this.outputs = outputs;
         this.uploads = uploads;
+        this.templates = templates;
         this.storage = storage;
         this.properties = properties;
         log.info("사용 가능한 AI 제공사: {}", this.providers.keySet());
@@ -165,7 +172,11 @@ public class PipelineExecutor {
         }
 
         String prompt = fillVariables((String) def.get("prompt"), variables);
-        Map<String, Object> params = castMap(def.get("params"));
+
+        // 파라미터에도 변수를 넣는다. 사용자가 고른 값이 지시문뿐 아니라 모델 설정까지
+        // 바꿔야 하는 경우가 있다 — 영상 해상도가 그렇다. 고른 값에 따라 요금이 두 배 갈린다.
+        Map<String, Object> params = fillVariablesIn(castMap(def.get("params")), variables);
+        params = withReferenceVideo(params, job.getTemplateId());
         Map<String, String> resolved = resolveInputs(castStringMap(def.get("inputs")), stepOutputs, job);
 
         // 프롬프트의 @이름 표시를 모델이 읽을 말로 바꾸고, 사진을 부르는 차례대로 세운다.
@@ -180,18 +191,17 @@ public class PipelineExecutor {
             GenerationProvider.StepStatus status = provider.poll(externalId);
 
             if (status == GenerationProvider.StepStatus.SUCCEEDED) {
-                byte[] bytes = provider.fetchResult(externalId);
-                String contentType = provider.resultContentType(externalId);
+                try (GenerationProvider.ResultStream result = provider.openResult(externalId)) {
+                    // 외부 URL은 대개 만료되므로 받는 즉시 우리 쪽으로 옮긴다.
+                    String key = "%s/%d/%s%s".formatted(
+                            properties.supabase().storage().outputBucket(),
+                            job.getId(),
+                            UUID.randomUUID(),
+                            extensionOf(result.contentType()));
 
-                // 외부 URL은 대개 만료되므로 받는 즉시 우리 쪽으로 옮긴다.
-                String key = "%s/%d/%s%s".formatted(
-                        properties.supabase().storage().outputBucket(),
-                        job.getId(),
-                        UUID.randomUUID(),
-                        extensionOf(contentType));
-
-                storage.put(key, new ByteArrayInputStream(bytes), contentType, bytes.length);
-                return new StepResult(key, contentType);
+                    save(key, result);
+                    return new StepResult(key, result.contentType());
+                }
             }
 
             if (status == GenerationProvider.StepStatus.FAILED) {
@@ -249,6 +259,51 @@ public class PipelineExecutor {
     }
 
 
+    /**
+     * 템플릿의 레퍼런스 영상을 파라미터에 끼워 넣는다.
+     *
+     * <p>영상을 다시 짓는 모델은 바탕이 될 영상이 있어야 한다. 그 영상은 사용자가 아니라 템플릿이
+     * 가진다 — 관리자가 등록할 때 한 번 올리고, 사용자는 갈아 끼울 사진만 올린다. 그래야 원가가
+     * 템플릿마다 고정된다. 그런 모델은 결과가 아니라 입력 영상의 길이로 요금을 매기므로,
+     * 사용자가 영상을 올리게 두면 올리는 사람이 우리 청구서를 정하게 된다.
+     *
+     * <p>파이프라인에 값이 적혀 있으면 그쪽을 존중한다. 영상이 여럿인 파이프라인에서 특정한
+     * 것을 가리켜야 할 때가 있다.
+     */
+    private Map<String, Object> withReferenceVideo(Map<String, Object> params, Long templateId) {
+        if (params.get("referenceVideo") != null || templateId == null) {
+            return params;
+        }
+
+        String key = templates.findById(templateId)
+                .map(com.prompick.template.domain.Template::getReferenceVideoKey)
+                .filter(value -> !value.isBlank())
+                .orElse(null);
+
+        if (key == null) {
+            return params;
+        }
+
+        Map<String, Object> withVideo = new HashMap<>(params);
+        withVideo.put("referenceVideo", key);
+        return withVideo;
+    }
+
+    /** 파라미터 값 안의 {{이름}}을 사용자가 고른 값으로 바꾼다. 문자열 값만 해당된다 */
+    private Map<String, Object> fillVariablesIn(
+            Map<String, Object> params, Map<String, Object> variables) {
+
+        if (params == null || params.isEmpty()) {
+            return params == null ? Map.of() : params;
+        }
+
+        Map<String, Object> filled = new HashMap<>(params);
+        filled.replaceAll(
+                (key, value) ->
+                        value instanceof String text ? fillVariables(text, variables) : value);
+        return filled;
+    }
+
     private String fillVariables(String template, Map<String, Object> variables) {
         if (template == null) return "";
         Matcher matcher = VARIABLE.matcher(template);
@@ -279,6 +334,39 @@ public class PipelineExecutor {
             case "video/webm" -> ".webm";
             default -> "";
         };
+    }
+
+    /**
+     * 결과를 저장소로 옮긴다.
+     *
+     * <p>길이를 아는 경우에는 그대로 흘려보낸다. 모르는 경우에만 임시 파일을 거치는데,
+     * 저장소가 올리기 전에 길이를 알아야 하기 때문이다. 어느 쪽이든 파일 전체가 메모리에
+     * 올라오지 않는다 — 영상은 수십 MB라 통째로 들면 컨테이너가 죽는다.
+     */
+    private void save(String key, GenerationProvider.ResultStream result) {
+        if (result.contentLength() >= 0) {
+            storage.put(key, result.content(), result.contentType(), result.contentLength());
+            return;
+        }
+
+        Path spool = null;
+        try {
+            spool = Files.createTempFile("prompick-result-", ".bin");
+            Files.copy(result.content(), spool, StandardCopyOption.REPLACE_EXISTING);
+            try (InputStream in = Files.newInputStream(spool)) {
+                storage.put(key, in, result.contentType(), Files.size(spool));
+            }
+        } catch (IOException e) {
+            throw new IllegalStateException("결과를 저장하지 못했다", e);
+        } finally {
+            if (spool != null) {
+                try {
+                    Files.deleteIfExists(spool);
+                } catch (IOException ignored) {
+                    // 임시 파일이 남는 것은 다음 재시작에 정리된다. 제작을 실패시킬 일은 아니다.
+                }
+            }
+        }
     }
 
     private static void sleep(Duration duration) {

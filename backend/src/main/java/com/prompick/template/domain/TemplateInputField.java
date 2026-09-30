@@ -13,6 +13,8 @@ public class TemplateInputField {
 
     public enum FieldType {
         IMAGE,
+        /** 참조 영상. Genjutsu 처럼 이미 찍힌 영상을 받아 다시 짓는 모델에 쓴다 */
+        VIDEO,
         SELECT,
         TEXT
     }

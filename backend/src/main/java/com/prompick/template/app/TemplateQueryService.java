@@ -2,6 +2,7 @@ package com.prompick.template.app;
 
 import com.prompick.common.error.ApiException;
 import com.prompick.common.error.ErrorCode;
+import com.prompick.generation.app.PhotoReferences;
 import com.prompick.template.api.dto.*;
 import com.prompick.template.domain.*;
 import java.math.BigDecimal;
@@ -35,17 +36,17 @@ public class TemplateQueryService {
 
     private final TemplateRepository templates;
     private final CategoryRepository categories;
-    private final TemplatePublicPromptRepository prompts;
+    private final TemplatePipelineRepository pipelines;
     private final TemplateAssembler assembler;
 
     public TemplateQueryService(
             TemplateRepository templates,
             CategoryRepository categories,
-            TemplatePublicPromptRepository prompts,
+            TemplatePipelineRepository pipelines,
             TemplateAssembler assembler) {
         this.templates = templates;
         this.categories = categories;
-        this.prompts = prompts;
+        this.pipelines = pipelines;
         this.assembler = assembler;
     }
 
@@ -102,6 +103,26 @@ public class TemplateQueryService {
         return new HomeResponse(sections.stream().filter(s -> !s.items().isEmpty()).toList());
     }
 
+    /**
+     * 사용자에게 보여줄 지시문.
+     *
+     * <p>실제로 제작에 쓰이는 파이프라인의 지시문을 그대로 쓴다. 예전에는 공개용을 따로 적어
+     * 두었는데, 같아야 한다는 것을 지켜주는 장치가 없어 며칠 만에 어긋났다. 사용자는 그동안
+     * 실제로 쓰이지 않는 프롬프트를 복사해 갔다.
+     *
+     * <p>{@code @이름}과 조건줄은 우리 문법이라 사람이 읽을 말로 바꿔서 내보낸다.
+     */
+    private String publicPromptOf(Long templateId) {
+        return pipelines.findByTemplateIdAndActiveTrue(templateId)
+                .map(pipeline -> pipeline.getSteps().stream()
+                        .map(step -> (String) step.get("prompt"))
+                        .filter(text -> text != null && !text.isBlank())
+                        .map(PhotoReferences::forDisplay)
+                        .collect(java.util.stream.Collectors.joining("\n\n")))
+                .filter(text -> !text.isBlank())
+                .orElse(null);
+    }
+
     public CursorPage<TemplateCardResponse> list(
             ContentType contentType,
             String categorySlug,
@@ -156,9 +177,9 @@ public class TemplateQueryService {
                 .findPublishedBySlug(slug)
                 .orElseThrow(() -> new ApiException(ErrorCode.TEMPLATE_NOT_AVAILABLE));
 
-        TemplatePublicPrompt prompt = null;
+        String prompt = null;
         if (template.getPromptAccess() == PromptAccess.FREE) {
-            prompt = prompts.findByTemplateId(template.getId()).orElse(null);
+            prompt = publicPromptOf(template.getId());
         }
         return assembler.toDetail(template, prompt);
     }

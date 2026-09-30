@@ -107,6 +107,27 @@ public class Template {
     @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
     private Instant createdAt;
 
+    /**
+     * 제작의 바탕이 되는 영상.
+     *
+     * <p>영상을 다시 짓는 모델(Genjutsu 등)이 이것을 받아 안의 일부만 갈아 끼운다. 예시 결과물과
+     * 정반대다 — 저쪽은 이 템플릿이 만들어내는 것이고, 이것은 만들 때 쓰는 재료다.
+     *
+     * <p>템플릿마다 하나뿐이다. 바뀌면 제작 결과가 통째로 달라지므로 목록이 아니라 값으로 둔다.
+     * 사용자가 아니라 관리자가 정한다는 점도 중요하다 — 이런 모델은 결과가 아니라 입력 영상의
+     * 길이로 요금을 매기므로, 사용자가 올리게 두면 올리는 사람이 우리 청구서를 정하게 된다.
+     */
+    @Column(name = "reference_video_key", length = 500)
+    private String referenceVideoKey;
+
+    /** 목록에서 자동재생할 가벼운 영상. 원본을 목록에서 틀면 타일 하나에 수십 MB가 나간다 */
+    @Column(name = "reference_preview_key", length = 500)
+    private String referencePreviewKey;
+
+    /** 영상이 뜨기 전에 보일 첫 장면 */
+    @Column(name = "reference_poster_key", length = 500)
+    private String referencePosterKey;
+
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "template_tags", joinColumns = @JoinColumn(name = "template_id"))
     @Column(name = "tag", length = 40)
@@ -235,6 +256,25 @@ public class Template {
 
     public TemplateStatus getStatus() {
         return status;
+    }
+
+    public String getReferenceVideoKey() {
+        return referenceVideoKey;
+    }
+
+    public String getReferencePreviewKey() {
+        return referencePreviewKey;
+    }
+
+    public String getReferencePosterKey() {
+        return referencePosterKey;
+    }
+
+    /** 레퍼런스 영상을 갈아 끼운다. 셋을 함께 바꾼다 — 따로 두면 원본과 미리보기가 어긋난다 */
+    public void setReferenceVideo(String videoKey, String previewKey, String posterKey) {
+        this.referenceVideoKey = videoKey;
+        this.referencePreviewKey = previewKey;
+        this.referencePosterKey = posterKey;
     }
 
     public String getRatio() {

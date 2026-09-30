@@ -48,6 +48,15 @@ public class Upload {
     @Column(name = "check_result", nullable = false, columnDefinition = "jsonb")
     private Map<String, Object> checkResult = Map.of();
 
+    /**
+     * 영상 길이(초). 사진이면 비어 있다.
+     *
+     * <p>서버가 파일에서 직접 재어 넣는다. 영상 제작의 요금이 이 값에 비례하므로, 브라우저가
+     * 알려준 숫자를 믿으면 그 숫자를 고치는 것만으로 우리 돈이 나간다.
+     */
+    @Column(name = "duration_seconds", precision = 8, scale = 2)
+    private java.math.BigDecimal durationSeconds;
+
     @Column(name = "expires_at")
     private Instant expiresAt;
 
@@ -67,6 +76,27 @@ public class Upload {
         this.sizeBytes = sizeBytes;
         this.width = width;
         this.height = height;
+    }
+
+    /** 영상 검사 결과를 적는다. 크기는 재지 않는다 — 해상도가 아니라 길이가 요금을 정한다 */
+    public void recordVideoCheck(
+            CheckStatus status, Map<String, Object> result, Long sizeBytes, Double seconds) {
+        this.checkStatus = status;
+        this.checkResult = result;
+        this.sizeBytes = sizeBytes;
+        this.durationSeconds =
+                seconds == null
+                        ? null
+                        : java.math.BigDecimal.valueOf(seconds)
+                                .setScale(2, java.math.RoundingMode.HALF_UP);
+    }
+
+    public java.math.BigDecimal getDurationSeconds() {
+        return durationSeconds;
+    }
+
+    public boolean isVideo() {
+        return mimeType != null && mimeType.toLowerCase().startsWith("video/");
     }
 
     public boolean isUsable() {

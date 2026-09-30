@@ -8,16 +8,26 @@ import type { AdminTemplate } from "@/entities/admin/model/types";
  * 운영자는 무엇이 빠졌는지 모른다. 그래서 무엇이 없는지 이름을 대서 말한다.
  */
 export function missingParts(t: {
+  contentType?: AdminTemplate["contentType"];
   promptAccess: AdminTemplate["promptAccess"];
   generateAccess: AdminTemplate["generateAccess"];
-  hasPublicPrompt: boolean;
   hasActivePipeline: boolean;
+  hasReferenceVideo?: boolean;
   mediaCount: number;
 }) {
+  const isVideo = t.contentType === "VIDEO";
   const missing: string[] = [];
-  if (t.promptAccess !== "HIDDEN" && !t.hasPublicPrompt) missing.push("공개 프롬프트");
+
+  // 보여줄 프롬프트는 파이프라인의 지시문이다. 파이프라인이 없으면 아래에서 따로 잡힌다.
   if (!t.hasActivePipeline) missing.push("실행 파이프라인");
-  if (t.mediaCount === 0) missing.push("예시 결과물");
+
+  // 영상은 레퍼런스가 곧 예시다.
+  if (isVideo) {
+    if (!t.hasReferenceVideo) missing.push("레퍼런스 영상");
+  } else if (t.mediaCount === 0) {
+    missing.push("예시 결과물");
+  }
+
   return missing;
 }
 
@@ -46,9 +56,6 @@ export function ExposureWarning({
       <p className="mt-1 text-[12px] leading-relaxed text-ink-soft">
         {template.generateAccess !== undefined && !template.hasActivePipeline
           ? "파이프라인이 없으면 사용자가 제작을 눌러도 아무것도 만들어지지 않아요. "
-          : ""}
-        {template.promptAccess !== "HIDDEN" && !template.hasPublicPrompt
-          ? "프롬프트를 공개로 해두고 원문이 없으면 결제 후 빈 화면이 보여요. "
           : ""}
         {templateId !== null && (
           <Link href={`/admin/templates/${templateId}`} className="text-accent hover:underline">

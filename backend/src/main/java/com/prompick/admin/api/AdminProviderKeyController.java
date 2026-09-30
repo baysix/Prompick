@@ -120,6 +120,7 @@ public class AdminProviderKeyController {
         return new KeyResponse(
                 provider.name(),
                 provider.displayName(),
+                provider.keyFormat(),
                 credential != null,
                 fromEnv,
                 credential != null ? credential.getKeyHint() : fromEnv ? "설정 파일" : null,
@@ -148,6 +149,8 @@ public class AdminProviderKeyController {
     public record KeyResponse(
             String provider,
             String displayName,
+            /** 키를 어떤 모양으로 적어야 하는지. 없으면 null */
+            String keyFormat,
             boolean stored,
             boolean fromEnv,
             String keyHint,

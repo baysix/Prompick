@@ -37,9 +37,26 @@ public record PrompickProperties(
     public record Output(int retentionDays) {}
 
     /** 업로드 제한 */
-    public record Upload(int maxSizeMb, List<String> allowedMimeTypes) {
+    public record Upload(int maxSizeMb, List<String> allowedMimeTypes, Video video) {
         public long maxSizeBytes() {
             return (long) maxSizeMb * 1024 * 1024;
+        }
+
+        /**
+         * 영상 업로드 규칙.
+         *
+         * @param minSeconds 이보다 짧으면 제공사가 받지 않는다
+         * @param maxSeconds 이보다 길면 받지 않는다. 요금이 길이에 비례하므로 이 값이 원가 상한이다
+         */
+        public record Video(
+                int maxSizeMb,
+                List<String> allowedMimeTypes,
+                int minSeconds,
+                int maxSeconds) {
+
+            public long maxSizeBytes() {
+                return (long) maxSizeMb * 1024 * 1024;
+            }
         }
     }
 

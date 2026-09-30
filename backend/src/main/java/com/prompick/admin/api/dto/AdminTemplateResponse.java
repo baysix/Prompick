@@ -31,15 +31,14 @@ public record AdminTemplateResponse(
         Map<String, Object> uploadGuide,
         List<String> tags,
         boolean pinned,
-        /** 공개 프롬프트 등록 여부. 제공하기로 해놓고 원문을 안 넣은 상태를 잡기 위해 */
-        boolean hasPublicPrompt,
         /** 활성 파이프라인 등록 여부. 없으면 제작이 불가능하다 */
         boolean hasActivePipeline,
+        /** 레퍼런스 영상 등록 여부. 영상 템플릿은 이것이 없으면 제작이 시작되지 않는다 */
+        boolean hasReferenceVideo,
         int mediaCount,
         long generationCount) {
 
-    public static AdminTemplateResponse of(
-            Template t, boolean hasPublicPrompt, boolean hasActivePipeline) {
+    public static AdminTemplateResponse of(Template t, boolean hasActivePipeline) {
         return new AdminTemplateResponse(
                 t.getId(),
                 t.getSlug(),
@@ -61,8 +60,8 @@ public record AdminTemplateResponse(
                 t.getUploadGuide(),
                 List.copyOf(t.getTags()),
                 t.isPinned(),
-                hasPublicPrompt,
                 hasActivePipeline,
+                t.getReferenceVideoKey() != null && !t.getReferenceVideoKey().isBlank(),
                 t.getMedia().size(),
                 t.getGenerationCount());
     }

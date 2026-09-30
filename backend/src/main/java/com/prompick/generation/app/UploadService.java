@@ -59,8 +59,12 @@ public class UploadService {
     /** 업로드 주소를 발급한다. */
     @Transactional
     public PresignResult presign(Long userId, String fileName, String contentType) {
-        List<String> allowed = properties.upload().allowedMimeTypes();
-        if (contentType == null || !allowed.contains(contentType.toLowerCase())) {
+        String mime = contentType == null ? "" : contentType.toLowerCase();
+
+        boolean isImage = properties.upload().allowedMimeTypes().contains(mime);
+        boolean isVideo = properties.upload().video().allowedMimeTypes().contains(mime);
+
+        if (!isImage && !isVideo) {
             throw new ApiException(ErrorCode.UPLOAD_UNSUPPORTED_TYPE);
         }
 
@@ -94,6 +98,11 @@ public class UploadService {
                 .findById(uploadId)
                 .filter(u -> u.getUserId().equals(userId))
                 .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND));
+
+        // 영상은 파일을 통째로 읽지 않는다. 수십 MB 라 메모리에 올리면 컨테이너가 죽는다.
+        if (upload.isVideo()) {
+            return checkVideo(upload);
+        }
 
         byte[] bytes;
         try (InputStream in = storage.get(upload.getStorageKey())) {
@@ -166,6 +175,56 @@ public class UploadService {
             throw new ApiException(ErrorCode.UPLOAD_BLOCKED);
         }
         return upload;
+    }
+
+    /**
+     * 영상 검사.
+     *
+     * <p>사진과 달리 길이를 잰다. 이 서비스에서 영상 제작의 요금은 결과가 아니라 입력 영상의
+     * 길이에 비례하기 때문이다 — 30초 720p 한 번이 2만원을 넘는다. 길이가 곧 돈이라 서버가
+     * 직접 재고, 재지 못하면 통과시키지 않는다. 모르는 채로 보내면 얼마가 나갈지 모르는
+     * 호출이 된다.
+     */
+    private CheckResult checkVideo(Upload upload) {
+        var rules = properties.upload().video();
+        Map<String, Object> result = new HashMap<>();
+        Upload.CheckStatus status = Upload.CheckStatus.PASSED;
+
+        // 저장소에서 받아오지 않고, 서명 주소로 필요한 조각만 읽는다.
+        String url = storage.presignDownload(upload.getStorageKey(), Duration.ofMinutes(10));
+
+        Long sizeBytes = null;
+        Double seconds = null;
+
+        try {
+            seconds = VideoProbe.durationSeconds(url).orElse(null);
+        } catch (RuntimeException e) {
+            log.debug("영상 길이를 재지 못했습니다: upload={}", upload.getId());
+        }
+
+        if (seconds == null) {
+            status = Upload.CheckStatus.BLOCKED;
+            result.put(
+                    "duration",
+                    "영상 길이를 확인하지 못했어요. mp4 또는 mov 파일로 다시 올려주세요");
+        } else if (seconds < rules.minSeconds()) {
+            status = Upload.CheckStatus.BLOCKED;
+            result.put(
+                    "duration",
+                    "영상이 %.1f초라 조금 짧아요. %d초 이상이어야 해요"
+                            .formatted(seconds, rules.minSeconds()));
+        } else if (seconds > rules.maxSeconds()) {
+            status = Upload.CheckStatus.BLOCKED;
+            result.put(
+                    "duration",
+                    "영상이 %.1f초예요. %d초 이하만 만들 수 있어요"
+                            .formatted(seconds, rules.maxSeconds()));
+        } else {
+            result.put("durationNote", "%.1f초 영상이에요".formatted(seconds));
+        }
+
+        upload.recordVideoCheck(status, result, sizeBytes, seconds);
+        return new CheckResult(upload.getId(), status, result);
     }
 
     private static String extensionOf(String fileName) {

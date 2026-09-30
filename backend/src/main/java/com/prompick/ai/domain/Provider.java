@@ -40,4 +40,19 @@ public enum Provider {
     public boolean needsApiKey() {
         return this != MOCK && this != INTERNAL;
     }
+
+    /**
+     * 키를 어떤 모양으로 적어야 하는지. 관리 화면의 입력 칸 아래에 그대로 나간다.
+     *
+     * <p>제공사마다 키 생김새가 다른데, 모르고 넣으면 저장은 되고 제작할 때에야 실패한다.
+     * 그때는 이미 사용자가 겪은 뒤다.
+     */
+    public String keyFormat() {
+        return switch (this) {
+            case HIGGSFIELD ->
+                    "키가 두 조각이에요. 콘솔에서 받은 Key ID 와 Key Secret 을 콜론으로 이어 붙여 넣어주세요. 예: abc123:secret456";
+            case OPENAI -> "sk- 로 시작하는 키";
+            default -> null;
+        };
+    }
 }
