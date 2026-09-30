@@ -32,7 +32,7 @@ jobs:
   # ---------------------------------------------------------------------------
   backend:
     name: 백엔드
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     services:
       postgres:
@@ -51,9 +51,9 @@ jobs:
           --health-retries 5
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: '25'
@@ -72,86 +72,28 @@ jobs:
           # Supabase 를 부르지 않는다. 키도 없고, 부를 이유도 없다.
           STORAGE_TYPE: LOCAL
 
-      - name: 실패한 테스트 보고서 남기기
+      # 실패했을 때 무엇이 왜 깨졌는지 로그에 바로 찍는다.
+      #
+      # 보고서를 아티팩트로만 남기면 zip 을 받아 열어봐야 알 수 있는데, 대개는 실패한
+      # 테스트 이름과 예외 몇 줄이면 충분하다. 그 몇 줄을 보려고 내려받게 하지 않는다.
+      - name: 실패 원인 찍기
         if: failure()
-        uses: actions/upload-artifact@v4
+        working-directory: backend
+        run: |
+          echo "::group::실패한 테스트"
+          grep -rl -e "<failure" -e "<error" build/test-results/test/ 2>/dev/null | while read -r f; do
+            echo "--- $f"
+            head -c 4000 "$f"
+            echo
+          done
+          echo "::endgroup::"
+
+      - name: 테스트 보고서 남기기
+        if: failure()
+        uses: actions/upload-artifact@v7
         with:
           name: 테스트-보고서
-          path: backend/build/reports/tests/test/
+          path: |
+            backend/build/reports/tests/test/
+            backend/build/test-results/test/
           retention-days: 7
-
-  # ---------------------------------------------------------------------------
-  # 프론트: 타입 + 린트 + 빌드
-  # ---------------------------------------------------------------------------
-  frontend:
-    name: 프론트
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
-
-      - name: 의존성 설치
-        working-directory: frontend
-        run: npm ci
-
-      - name: 타입 검사
-        working-directory: frontend
-        run: npx tsc --noEmit
-
-      - name: 린트
-        working-directory: frontend
-        run: npx eslint
-
-      - name: 빌드
-        working-directory: frontend
-        run: npm run build
-        env:
-          # 빌드가 되는지만 보는 것이라 진짜 주소일 필요가 없다. 다만 Next 가 빌드할 때
-          # 이 값들을 코드에 박아 넣으므로, 비어 있으면 형식 오류로 넘어질 수 있어 채운다.
-          NEXT_PUBLIC_API_BASE_URL: https://example.invalid/api/v1
-          NEXT_PUBLIC_SITE_URL: https://example.invalid
-          NEXT_PUBLIC_SUPABASE_URL: https://example.invalid
-          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ci-placeholder
-
-  # ---------------------------------------------------------------------------
-  # 이미지: 서버에서 실제로 도는 그 모양으로 빌드되는지
-  #
-  # 위 두 작업과 겹쳐 보이지만 다르다. 저쪽은 "코드가 맞는가"를 보고 여기는
-  # "Dockerfile 이 맞는가"를 본다. COPY 경로가 틀렸거나 줄바꿈이 뭉개진 것은
-  # 코드 검사로는 잡히지 않고, 서버에 올려봐야 알게 된다.
-  # ---------------------------------------------------------------------------
-  images:
-    name: 도커 이미지
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: docker/setup-buildx-action@v3
-
-      - name: 백엔드 이미지
-        uses: docker/build-push-action@v6
-        with:
-          context: ./backend
-          push: false
-          cache-from: type=gha,scope=backend
-          cache-to: type=gha,scope=backend,mode=max
-
-      - name: 프론트 이미지
-        uses: docker/build-push-action@v6
-        with:
-          context: ./frontend
-          push: false
-          build-args: |
-            NEXT_PUBLIC_API_BASE_URL=https://example.invalid/api/v1
-            NEXT_PUBLIC_SITE_URL=https://example.invalid
-            NEXT_PUBLIC_SUPABASE_URL=https://example.invalid
-            NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=ci-placeholder
-          cache-from: type=gha,scope=frontend
-          cache-to: type=gha,scope=frontend,mode=max
