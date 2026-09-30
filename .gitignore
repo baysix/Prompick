@@ -3,6 +3,7 @@
 .env.*
 !.env.example
 !.env.local.example
+!.env.server.example
 
 # 로컬 개발용 파일 저장소.
 # 경로를 못박는다. 그냥 storage/ 라고 쓰면 어느 깊이든 매칭되어
