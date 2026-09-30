@@ -1,0 +1,79 @@
+# =============================================================================
+# Lightsail 한 대에 올리는 구성
+#
+#   caddy  바깥과 닿는 유일한 컨테이너. 인증서를 자동으로 받아 갱신하고, 주소를 보고
+#          프론트와 백엔드로 나눠 보낸다.
+#   web    Next.js. 화면을 그린다.
+#   api    Spring Boot. 화면 뒤의 모든 일.
+#
+# web 과 api 는 바깥에 포트를 열지 않는다. 같은 도커 네트워크 안에서 이름으로 서로를 찾고,
+# 바깥에서 오는 요청은 반드시 Caddy 를 거친다. 포트를 열어두면 https 를 우회해 평문으로
+# 접근하는 길이 생긴다.
+#
+# 메모리는 4GB를 이렇게 나눈다.
+#   api 1.5GB / web 0.7GB / caddy 0.1GB  =  2.3GB
+#   나머지 1.7GB는 OS·도커·빌드 몫이다. 빌드가 순간 2GB 가까이 쓰므로 이 여유가 필요하다.
+# =============================================================================
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # 받아온 인증서. 이 볼륨이 없으면 컨테이너를 다시 만들 때마다 새로 발급받고,
+      # Let's Encrypt 의 발급 한도에 걸린다.
+      - caddy_data:/data
+      - caddy_config:/config
+    environment:
+      DOMAIN: ${DOMAIN}
+    depends_on:
+      - web
+      - api
+    mem_limit: 128m
+
+  web:
+    build:
+      context: ./frontend
+      args:
+        # Next 는 이 값들을 빌드할 때 코드에 박아 넣는다. 바꾸려면 다시 빌드해야 한다.
+        NEXT_PUBLIC_API_BASE_URL: https://${DOMAIN}/api/v1
+        NEXT_PUBLIC_SITE_URL: https://${DOMAIN}
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+        NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY}
+    restart: always
+    environment:
+      # 화면을 서버에서 그릴 때 쓰는 주소. 같은 박스 안이라 인터넷을 타지 않는다.
+      # 예전에는 이 호출이 Vercel(미국)에서 Render(미국)로 나갔다.
+      API_BASE_URL: http://api:8080/api/v1
+    depends_on:
+      api:
+        condition: service_healthy
+    mem_limit: 700m
+
+  api:
+    build:
+      context: ./backend
+    restart: always
+    env_file:
+      - .env
+    healthcheck:
+      # 살아 있는지 확인한다. 이게 통과해야 web 이 뜨고, 죽으면 도커가 다시 세운다.
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      # 처음 뜨는 데 10~20초 걸린다. 그동안은 실패로 치지 않는다.
+      start_period: 90s
+      retries: 3
+    volumes:
+      # OutOfMemory 로 죽을 때 남기는 덤프. 컨테이너가 사라져도 남아야 원인을 볼 수 있다.
+      - api_dumps:/app/dumps
+    mem_limit: 1536m
+
+volumes:
+  caddy_data:
+  caddy_config:
+  api_dumps:
