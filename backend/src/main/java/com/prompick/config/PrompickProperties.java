@@ -11,6 +11,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  */
 @ConfigurationProperties(prefix = "prompick")
 public record PrompickProperties(
+        Legal legal,
         Credit credit,
         Free free,
         Output output,
@@ -21,6 +22,14 @@ public record PrompickProperties(
         Cors cors) {
 
     /** 재화(프롬비) 설정 */
+    /**
+     * 약관 문서의 버전.
+     *
+     * <p>동의 기록에 함께 남긴다. 문서를 고치면 이 값을 올려야 한다. 올리지 않으면 바뀐
+     * 내용에 옛 사람들이 동의한 것처럼 기록된다.
+     */
+    public record Legal(String termsVersion, String privacyVersion) {}
+
     public record Credit(
             String unitName,
             int signupBonus,

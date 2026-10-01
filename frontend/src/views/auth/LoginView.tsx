@@ -1,11 +1,19 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
+import { legalApi, legalKeys } from "@/entities/legal/api/legalApi";
 import { api, ApiError } from "@/shared/api/client";
 import { supabase } from "@/shared/auth/supabase";
 import { SIGNUP_OPEN } from "@/shared/config/env";
 import { Button } from "@/shared/ui/Button";
+import {
+  ConsentFields,
+  EMPTY_CONSENTS,
+  requiredAgreed,
+  type Consents,
+} from "./ConsentFields";
 
 /**
  * 로그인과 가입.
@@ -21,8 +29,16 @@ export function LoginView() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [nickname, setNickname] = useState("");
+  const [consents, setConsents] = useState<Consents>(EMPTY_CONSENTS);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  // 사용자가 본 문서의 버전. 가입할 때 그대로 돌려보내면 서버가 지금 버전과 맞는지 본다.
+  const { data: legal } = useQuery({
+    queryKey: legalKeys.versions(),
+    queryFn: () => legalApi.versions(),
+    enabled: mode === "signup",
+  });
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -31,7 +47,20 @@ export function LoginView() {
 
     try {
       if (mode === "signup") {
-        await api.post("/auth/signup", { email, password, nickname });
+        if (!legal) {
+          throw new Error("약관을 불러오지 못했어요. 잠시 후 다시 시도해주세요.");
+        }
+        await api.post("/auth/signup", {
+          email,
+          password,
+          nickname,
+          agreeTerms: consents.terms,
+          agreePrivacy: consents.privacy,
+          agreeAge14: consents.age14,
+          agreeMarketing: consents.marketing,
+          termsVersion: legal.termsVersion,
+          privacyVersion: legal.privacyVersion,
+        });
       }
 
       const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
@@ -80,13 +109,24 @@ export function LoginView() {
             required
           />
 
+          {mode === "signup" && (
+            <div className="pt-1">
+              <ConsentFields value={consents} onChange={setConsents} />
+            </div>
+          )}
+
           {error && (
             <p className="rounded-xl bg-[#3a1d1d] px-3.5 py-2.5 text-[13px] leading-relaxed text-[#ff9b9b]">
               {error}
             </p>
           )}
 
-          <Button type="submit" size="lg" disabled={busy} className="w-full">
+          <Button
+            type="submit"
+            size="lg"
+            disabled={busy || (mode === "signup" && !requiredAgreed(consents))}
+            className="w-full"
+          >
             {busy ? "잠시만요" : mode === "signin" ? "로그인" : "가입하고 시작하기"}
           </Button>
         </form>

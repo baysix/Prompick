@@ -2,8 +2,14 @@ package com.prompick.user.app;
 
 import com.prompick.common.error.ApiException;
 import com.prompick.common.error.ErrorCode;
+import com.prompick.config.PrompickProperties;
+import com.prompick.user.domain.ConsentKind;
 import com.prompick.user.domain.User;
+import com.prompick.user.domain.UserConsent;
+import com.prompick.user.domain.UserConsentRepository;
 import com.prompick.user.domain.UserRepository;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,10 +20,18 @@ public class UserService {
 
     private final UserRepository users;
     private final SupabaseAuthClient auth;
+    private final UserConsentRepository consents;
+    private final PrompickProperties properties;
 
-    public UserService(UserRepository users, SupabaseAuthClient auth) {
+    public UserService(
+            UserRepository users,
+            SupabaseAuthClient auth,
+            UserConsentRepository consents,
+            PrompickProperties properties) {
         this.users = users;
         this.auth = auth;
+        this.consents = consents;
+        this.properties = properties;
     }
 
     /**
@@ -26,7 +40,8 @@ public class UserService {
      * <p>계정 생성과 회원 행 저장은 함께 성공해야 한다. 회원 행 저장이 실패하면 만들어 둔 계정을 지운다.
      * 그러지 않으면 로그인은 되는데 서비스에는 없는 사용자가 남는다.
      */
-    public User signUp(String email, String password, String nickname) {
+    public User signUp(
+            String email, String password, String nickname, boolean marketingAgreed) {
         String trimmed = nickname.trim();
         if (users.existsByNickname(trimmed)) {
             throw new ApiException(ErrorCode.INVALID_REQUEST, "이미 쓰고 있는 닉네임이에요.");
@@ -34,11 +49,37 @@ public class UserService {
 
         UUID authUserId = auth.createUser(email, password);
         try {
-            return users.save(new User(authUserId, email, trimmed));
+            User user = users.save(new User(authUserId, email, trimmed));
+            recordSignUpConsents(user.getId(), marketingAgreed);
+            return user;
         } catch (RuntimeException e) {
             auth.deleteUser(authUserId);
             throw e;
         }
+    }
+
+    /**
+     * 가입할 때의 동의를 남긴다.
+     *
+     * <p>필수 항목은 컨트롤러에서 이미 막았으므로 여기서는 전부 동의한 것으로 적는다. 선택
+     * 항목인 광고 수신은 거절도 기록한다 — "거절했다"는 사실이 남아야 나중에 보낸 적이 있는지
+     * 다툴 때 근거가 된다. 안 보낸 것과 보내면 안 되는 줄 몰랐던 것은 다르다.
+     *
+     * <p>버전은 요청에 담겨 온 값이 아니라 서버가 지금 들고 있는 값을 쓴다. 컨트롤러가 둘이
+     * 같은지 먼저 확인하므로, 사용자가 본 문서와 여기 적히는 버전은 일치한다.
+     */
+    private void recordSignUpConsents(Long userId, boolean marketingAgreed) {
+        String terms = properties.legal().termsVersion();
+        String privacy = properties.legal().privacyVersion();
+
+        // 만 14세 확인과 광고 수신은 개인정보처리방침 쪽에 적힌 내용이라 그 버전을 따른다.
+        List<UserConsent> rows = new ArrayList<>(4);
+        rows.add(new UserConsent(userId, ConsentKind.TERMS, terms, true));
+        rows.add(new UserConsent(userId, ConsentKind.PRIVACY, privacy, true));
+        rows.add(new UserConsent(userId, ConsentKind.AGE_14, privacy, true));
+        rows.add(new UserConsent(userId, ConsentKind.MARKETING, privacy, marketingAgreed));
+
+        consents.saveAll(rows);
     }
 
     /**

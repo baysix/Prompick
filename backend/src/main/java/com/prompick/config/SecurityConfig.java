@@ -55,7 +55,9 @@ public class SecurityConfig {
                                 "/api/v1/notices",
                                 // 점검 중이라 제작을 안 받는다는 사실도 마찬가지다. 로그인해서
                                 // 사진까지 올린 뒤에 알게 되면 이미 늦다.
-                                "/api/v1/service-status")
+                                "/api/v1/service-status",
+                                // 약관 버전은 가입 화면이 읽는다. 가입 전이라 토큰이 없다.
+                                "/api/v1/legal")
                         .permitAll()
                         // 웹훅은 서명으로 검증한다. (포트원, AI 제공사)
                         .requestMatchers("/api/v1/webhooks/**")
