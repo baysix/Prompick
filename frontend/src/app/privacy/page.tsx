@@ -22,7 +22,7 @@ export default function Page() {
     <PageShell title="개인정보처리방침">
       <DraftNotice />
 
-      <LegalDoc version="2026-10-01">
+      <LegalDoc version="2026-10-02">
         <Article title="1. 무엇을 모으나요">
           <p>서비스를 쓰는 데 꼭 필요한 것만 받습니다.</p>
           <Table
@@ -58,6 +58,12 @@ export default function Page() {
                 "접속 기록, 마지막 로그인 시각",
                 "자동 수집",
                 "부정 이용을 확인하고 장애를 찾기 위해",
+              ],
+              [
+                "쓰는 동안",
+                "광고 식별을 위한 쿠키 값",
+                "자동 수집",
+                "광고를 보여주기 위해 (8장에서 끌 수 있습니다)",
               ],
             ]}
           />
@@ -123,6 +129,11 @@ export default function Page() {
               ["Supabase", "회원 인증, 데이터베이스, 파일 저장", "이메일, 회원 정보, 올리신 사진과 결과물"],
               ["Amazon Web Services", "서버 운영 (서울 리전)", "서비스 이용 중 오가는 모든 정보"],
               ["OpenAI 등 AI 제공사", "결과물 제작", "올리신 사진과 제작에 필요한 설정값"],
+              [
+                "Google (AdSense)",
+                "광고 게재",
+                "접속 기록, 광고 식별을 위한 쿠키 값",
+              ],
             ]}
           />
           <p>
@@ -190,10 +201,49 @@ export default function Page() {
           </Items>
         </Article>
 
-        <Article title="8. 쿠키">
+        <Article title="8. 쿠키와 광고">
           <p>
-            로그인 상태를 유지하기 위해 쿠키를 씁니다. 광고를 위한 추적은 하지 않습니다. 브라우저
-            설정에서 쿠키를 막으면 로그인이 유지되지 않습니다.
+            쿠키는 두 가지 용도로 쓰입니다. 하나는 로그인 상태를 유지하는 것이고, 다른 하나는
+            광고입니다.
+          </p>
+          <Items>
+            <li>
+              <strong className="text-ink">로그인 쿠키</strong> — 브라우저 설정에서 막으면 로그인이
+              유지되지 않습니다.
+            </li>
+            <li>
+              <strong className="text-ink">광고 쿠키</strong> — 서비스 운영비를 보태기 위해 구글
+              애드센스로 광고를 보여줍니다. 구글과 그 협력사는 광고를 고르기 위해 쿠키를 쓰며,
+              이전에 이 사이트나 다른 사이트를 방문한 기록이 그 판단에 쓰일 수 있습니다.
+            </li>
+          </Items>
+          <p>
+            맞춤 광고를 원하지 않으시면{" "}
+            <a
+              href="https://adssettings.google.com"
+              target="_blank"
+              rel="noreferrer"
+              className="text-accent underline"
+            >
+              구글 광고 설정
+            </a>
+            에서 끄실 수 있습니다. 광고 자체가 사라지지는 않고, 관심사와 무관한 광고로 바뀝니다.
+            제3자 공급업체의 쿠키는{" "}
+            <a
+              href="https://www.aboutads.info"
+              target="_blank"
+              rel="noreferrer"
+              className="text-accent underline"
+            >
+              aboutads.info
+            </a>
+            에서 함께 끌 수 있습니다.
+          </p>
+          <p>
+            <strong className="text-ink">
+              회원 정보나 올리신 사진은 광고에 쓰이지 않습니다.
+            </strong>{" "}
+            이메일, 닉네임, 사진, 결과물은 광고 사업자에게 전달되지 않습니다.
           </p>
         </Article>
 
@@ -213,7 +263,7 @@ export default function Page() {
         </Article>
 
         <Article title="부칙">
-          <p>이 방침은 2026년 10월 1일부터 시행합니다.</p>
+          <p>이 방침은 2026년 10월 2일부터 시행합니다.</p>
         </Article>
       </LegalDoc>
     </PageShell>

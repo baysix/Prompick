@@ -22,9 +22,19 @@ const GROUPS = [
     title: "이용",
     links: [
       { href: "/pricing", label: "가격" },
-      { href: "/notice", label: "공지사항" },
+      { href: "/guide", label: "가이드" },
       { href: "/help", label: "도움말" },
+      { href: "/notice", label: "공지사항" },
       { href: "/report", label: "오류 신고" },
+    ],
+  },
+  {
+    title: "프롬픽",
+    links: [
+      { href: "/about", label: "소개" },
+      { href: "/guide/photos", label: "사진 고르는 법" },
+      { href: "/guide/results", label: "결과가 다른 이유" },
+      { href: "/guide/prompts", label: "프롬프트 쓰는 법" },
     ],
   },
   {

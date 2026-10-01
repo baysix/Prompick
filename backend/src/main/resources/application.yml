@@ -90,7 +90,7 @@ prompick:
   # 날짜로 적는 이유는 문서 머리에 적힌 시행일과 눈으로 맞춰보기 위해서다.
   legal:
     terms-version: ${TERMS_VERSION:2026-10-01}
-    privacy-version: ${PRIVACY_VERSION:2026-10-01}
+    privacy-version: ${PRIVACY_VERSION:2026-10-02}
 
   # 재화 단위: 프롬비
   credit:

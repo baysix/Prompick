@@ -26,6 +26,7 @@ const NAV = [
   { href: "/explore?contentType=IMAGE", label: "이미지", contentType: "IMAGE" },
   { href: "/gallery", label: "갤러리" },
   { href: "/requests", label: "요청" },
+  { href: "/guide", label: "가이드" },
   { href: "/pricing", label: "가격" },
 ] as const;
 
