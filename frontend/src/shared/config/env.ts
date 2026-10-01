@@ -26,6 +26,14 @@ export const env = {
  */
 export const SIGNUP_OPEN = true;
 
+/**
+ * 구글 애드센스 퍼블리셔 ID.
+ *
+ * 빈 문자열이면 광고 스크립트를 아예 넣지 않는다. 승인 전이나 개발 중에 구글 스크립트가
+ * 끼어들지 않게 하려는 것이고, 나중에 광고를 걷어낼 때도 이 값만 비우면 된다.
+ */
+export const ADSENSE_CLIENT = "ca-pub-8073655614342001";
+
 /** 서비스 전역 상수 */
 export const SERVICE = {
   name: "프롬픽",
