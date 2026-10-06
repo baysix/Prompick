@@ -105,8 +105,15 @@ prompick:
     daily-generate-limit: ${FREE_DAILY_LIMIT:3}
     # 무료 결과물 워터마크 적용 여부
     watermark: true
-    # 무료 제작에 휴대폰 본인인증을 요구할지
-    require-identity-verification: ${FREE_REQUIRE_IDENTITY:true}
+    # 무료 제작에 휴대폰 본인인증을 요구할지.
+    #
+    # 기본값이 false 인 이유: 인증하는 길이 아직 없다. User.verifyIdentity 는 있지만
+    # 그것을 부르는 곳이 어디에도 없고, 마이페이지의 인증 버튼도 눌리지 않는다.
+    # 이 값을 켜면 아무도 통과할 수 없는 문을 세우는 셈이라 무료 제작이 전원 차단된다.
+    #
+    # 본인인증을 실제로 붙이기 전까지는 켜지 않는다. 그동안 무료 횟수 어뷰징은
+    # free.daily-generate-limit 하나로만 막힌다 - 계정을 여러 개 만들면 그만큼 뚫린다.
+    require-identity-verification: ${FREE_REQUIRE_IDENTITY:false}
 
   output:
     # 결과물 보관 기간(일). 만료 후 파일 삭제
