@@ -82,7 +82,7 @@ export function LoginView() {
       router.replace(next);
       router.refresh();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : (err as Error).message);
+      setError(messageOf(err));
     } finally {
       setBusy(false);
     }
@@ -102,7 +102,15 @@ export function LoginView() {
 
         <form onSubmit={submit} className="mt-7 space-y-3">
           {mode === "signup" && (
-            <Field label="닉네임" value={nickname} onChange={setNickname} placeholder="2~20자" />
+            <Field
+              label="닉네임"
+              value={nickname}
+              onChange={setNickname}
+              placeholder="2~20자"
+              required
+              minLength={2}
+              maxLength={20}
+            />
           )}
           <Field label="이메일" type="email" value={email} onChange={setEmail} required />
           <Field
@@ -112,6 +120,7 @@ export function LoginView() {
             onChange={setPassword}
             placeholder={mode === "signup" ? "8자 이상" : undefined}
             required
+            minLength={mode === "signup" ? 8 : undefined}
           />
 
           {mode === "signup" && (
@@ -121,7 +130,7 @@ export function LoginView() {
           )}
 
           {error && (
-            <p className="rounded-xl bg-[#3a1d1d] px-3.5 py-2.5 text-[13px] leading-relaxed text-[#ff9b9b]">
+            <p className="rounded-xl bg-[#3a1d1d] px-3.5 py-2.5 text-[13px] leading-relaxed whitespace-pre-line text-[#ff9b9b]">
               {error}
             </p>
           )}
@@ -160,6 +169,25 @@ export function LoginView() {
   );
 }
 
+/**
+ * 사용자에게 보여줄 한 줄을 고른다.
+ *
+ * 서버는 입력이 규칙에 안 맞으면 "요청 값이 올바르지 않아요"라는 뭉뚱그린 말과 함께,
+ * errors 에 어느 칸이 왜 틀렸는지를 담아 보낸다. 그런데 화면이 앞엣것만 보여주고 있었다.
+ * 닉네임이 한 글자여서 막힌 사람에게 "요청 값이 올바르지 않아요"는 아무것도 알려주지 않고,
+ * 어디를 고쳐야 할지 모르니 같은 입력으로 몇 번이고 다시 누르게 된다.
+ *
+ * 그래서 칸별 이유가 있으면 그것을 보여준다. 여러 개면 줄을 나눠 전부 보여준다 - 하나만
+ * 고치고 다시 눌렀다가 또 막히는 것이 더 나쁘다.
+ */
+function messageOf(err: unknown): string {
+  if (err instanceof ApiError) {
+    const fields = err.fieldErrors ?? [];
+    return fields.length > 0 ? fields.map((f) => f.message).join("\n") : err.message;
+  }
+  return (err as Error).message;
+}
+
 function Field({
   label,
   value,
@@ -167,12 +195,16 @@ function Field({
   type = "text",
   placeholder,
   required,
+  minLength,
+  maxLength,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   type?: string;
   placeholder?: string;
+  minLength?: number;
+  maxLength?: number;
   required?: boolean;
 }) {
   return (
@@ -184,6 +216,8 @@ function Field({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         required={required}
+        minLength={minLength}
+        maxLength={maxLength}
         className="w-full rounded-xl bg-surface px-3.5 py-3 text-[14px] text-ink outline-none placeholder:text-ink-faint"
       />
     </label>

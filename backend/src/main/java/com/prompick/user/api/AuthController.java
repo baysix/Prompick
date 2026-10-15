@@ -119,8 +119,10 @@ public class AuthController {
             Boolean agreePrivacy,
             Boolean agreeAge14,
             Boolean agreeMarketing,
-            @NotBlank String termsVersion,
-            @NotBlank String privacyVersion) {}
+            @NotBlank(message = "약관을 불러오지 못했어요. 새로고침한 뒤 다시 시도해주세요")
+                    String termsVersion,
+            @NotBlank(message = "약관을 불러오지 못했어요. 새로고침한 뒤 다시 시도해주세요")
+                    String privacyVersion) {}
 
     public record LegalResponse(String termsVersion, String privacyVersion) {}
 
