@@ -23,9 +23,14 @@ import {
  */
 export function LoginView() {
   const router = useRouter();
-  const next = useSearchParams().get("next") ?? "/";
+  const params = useSearchParams();
+  const next = params.get("next") ?? "/";
 
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  // ?mode=signup 으로 들어오면 가입 화면으로 연다. 헤더의 가입 버튼이 이 주소를 쓴다.
+  // 가입이 닫혀 있으면 무시한다 - 주소를 아는 사람에게만 열리는 문이 되어서는 안 된다.
+  const [mode, setMode] = useState<"signin" | "signup">(
+    SIGNUP_OPEN && params.get("mode") === "signup" ? "signup" : "signin",
+  );
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [nickname, setNickname] = useState("");

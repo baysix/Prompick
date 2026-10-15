@@ -201,7 +201,10 @@ function AccountArea() {
           로그인
         </ButtonLink>
         {SIGNUP_OPEN && (
-          <ButtonLink href="/login" size="sm">
+          // 가입 모드로 바로 연다. 그냥 /login 으로 보내면 "다시 오셨네요" 로그인 화면이
+          // 뜨는데, 가입하려고 누른 사람에게는 닉네임 칸도 동의란도 없는 화면이라
+          // 아이디를 만들 방법이 없다. 그대로 입력하면 "비밀번호가 맞지 않아요"가 나온다.
+          <ButtonLink href="/login?mode=signup" size="sm">
             가입하기
           </ButtonLink>
         )}
