@@ -7,6 +7,7 @@ import { useState } from "react";
 import { generationApi, generationKeys } from "@/entities/generation/api/generationApi";
 import { useGenerationLock } from "@/entities/generation/lib/useGenerationLock";
 import { isPlayableVideo } from "@/entities/template/lib/media";
+import { GuideTabs } from "@/entities/template/ui/GuideTabs";
 import { PromptBlock } from "@/entities/template/ui/PromptBlock";
 import type { TemplateDetail } from "@/entities/template/model/types";
 import { useSession } from "@/shared/auth/SessionProvider";
@@ -196,24 +197,11 @@ export function TemplateDetailView({ template }: { template: TemplateDetail }) {
               prompt={template.prompt}
             />
 
-            {template.uploadGuide?.checklist && template.uploadGuide.checklist.length > 0 && (
-              <section>
-                <h2 className="text-[15px] font-semibold text-ink">이렇게 찍어 주세요</h2>
-                <ul className="mt-3 space-y-2">
-                  {template.uploadGuide.checklist.map((item) => (
-                    <li key={item} className="flex gap-2.5 text-[13px] leading-relaxed text-ink-soft">
-                      <span className="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-accent" />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-                {template.uploadGuide.resultNote && (
-                  <p className="mt-4 rounded-xl bg-surface px-4 py-3 text-[13px] leading-relaxed text-ink-soft">
-                    {template.uploadGuide.resultNote}
-                  </p>
-                )}
-              </section>
-            )}
+            {/*
+              사진 안내와 직접 만드는 법. 둘 다 있으면 탭으로 갈리고, 하나만 있으면
+              그것만 나온다. 직접 만드는 법을 적어둔 템플릿에만 탭이 생긴다.
+            */}
+            <GuideTabs template={template} />
 
             {template.tags.length > 0 && (
               <div className="flex flex-wrap gap-1.5">

@@ -86,6 +86,21 @@ public class Template {
     @Column(name = "upload_guide", nullable = false, columnDefinition = "jsonb")
     private Map<String, Object> uploadGuide = Map.of();
 
+    /**
+     * 직접 만드는 법.
+     *
+     * <p>upload_guide 와 목적이 반대다. 그쪽은 "우리가 만들어 줄 테니 사진을 이렇게 올려라"이고
+     * 이쪽은 "직접 만들려면 저기 가서 이렇게 해라"다. 영상은 만드는 길이 저마다 달라서
+     * 한 곳에 모아 적은 일반론으로는 따라 할 수 없다.
+     *
+     * <p>비어 있으면 화면에 탭이 생기지 않는다. 적어둔 템플릿에만 나온다.
+     *
+     * <p>로그인하지 않은 사람에게도 보이므로 파이프라인의 실제 프롬프트를 옮겨 적지 않는다.
+     */
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "self_guide", columnDefinition = "jsonb")
+    private Map<String, Object> selfGuide;
+
     @Column(nullable = false)
     private boolean pinned;
 
@@ -191,6 +206,18 @@ public class Template {
         this.uploadGuide = uploadGuide == null ? Map.of() : uploadGuide;
         this.tags = tags == null ? new LinkedHashSet<>() : new LinkedHashSet<>(tags);
         this.pinned = pinned;
+    }
+
+    /**
+     * 직접 만드는 법을 바꾼다.
+     *
+     * <p>edit 의 인자로 넣지 않고 따로 둔 이유는, 그 메서드가 이미 열세 개를 받고 있어
+     * 한 자리 더 늘리면 호출부에서 순서를 틀리기 쉬워져서다.
+     *
+     * <p>비었으면 null 로 만든다. 빈 객체를 두면 화면이 "안내가 있다"고 보고 빈 탭을 그린다.
+     */
+    public void changeSelfGuide(Map<String, Object> guide) {
+        this.selfGuide = (guide == null || guide.isEmpty()) ? null : guide;
     }
 
     /** 게시. 처음 게시하는 순간을 기록해 신규 목록 정렬에 쓴다. */
@@ -299,6 +326,11 @@ public class Template {
 
     public Map<String, Object> getUploadGuide() {
         return uploadGuide;
+    }
+
+    /** 비어 있으면 null. 화면은 이 값이 있을 때만 탭을 만든다 */
+    public Map<String, Object> getSelfGuide() {
+        return selfGuide;
     }
 
     public boolean isPinned() {

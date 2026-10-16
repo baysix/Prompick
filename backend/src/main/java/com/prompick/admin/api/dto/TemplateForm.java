@@ -35,5 +35,7 @@ public record TemplateForm(
         // 가이드
         String requiredPhotoSummary,
         Map<String, Object> uploadGuide,
+        /** 직접 만드는 법. 비우면 화면에 탭이 생기지 않는다 */
+        Map<String, Object> selfGuide,
         List<String> tags,
         boolean pinned) {}

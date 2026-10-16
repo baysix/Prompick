@@ -94,6 +94,15 @@ export interface AdminTemplate {
   estimatedSeconds: number;
   requiredPhotoSummary: string | null;
   uploadGuide: { checklist?: string[]; resultNote?: string };
+  /** 직접 만드는 법. 비우면 상세 화면에 탭이 생기지 않는다 */
+  selfGuide: {
+    toolName?: string;
+    toolUrl?: string;
+    intro?: string;
+    steps?: string[];
+    tips?: string[];
+    costNote?: string;
+  } | null;
   tags: string[];
   pinned: boolean;
   hasActivePipeline: boolean;
@@ -120,6 +129,15 @@ export interface TemplateFormValues {
   estimatedSeconds: number;
   requiredPhotoSummary: string;
   uploadGuide: { checklist?: string[]; resultNote?: string };
+  /** 직접 만드는 법. 비우면 상세 화면에 탭이 생기지 않는다 */
+  selfGuide: {
+    toolName?: string;
+    toolUrl?: string;
+    intro?: string;
+    steps?: string[];
+    tips?: string[];
+    costNote?: string;
+  } | null;
   tags: string[];
   pinned: boolean;
 }
@@ -140,6 +158,7 @@ export const EMPTY_TEMPLATE_FORM: TemplateFormValues = {
   estimatedSeconds: 120,
   requiredPhotoSummary: "",
   uploadGuide: {},
+  selfGuide: null,
   tags: [],
   pinned: false,
 };
@@ -162,6 +181,7 @@ export function toFormValues(t: AdminTemplate): TemplateFormValues {
     estimatedSeconds: t.estimatedSeconds,
     requiredPhotoSummary: t.requiredPhotoSummary ?? "",
     uploadGuide: t.uploadGuide,
+    selfGuide: t.selfGuide ?? null,
     tags: t.tags,
     pinned: t.pinned,
   };

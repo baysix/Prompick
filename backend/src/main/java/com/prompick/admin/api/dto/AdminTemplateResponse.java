@@ -29,6 +29,7 @@ public record AdminTemplateResponse(
         int estimatedSeconds,
         String requiredPhotoSummary,
         Map<String, Object> uploadGuide,
+        Map<String, Object> selfGuide,
         List<String> tags,
         boolean pinned,
         /** 활성 파이프라인 등록 여부. 없으면 제작이 불가능하다 */
@@ -58,6 +59,7 @@ public record AdminTemplateResponse(
                 t.getEstimatedSeconds(),
                 t.getRequiredPhotoSummary(),
                 t.getUploadGuide(),
+                t.getSelfGuide(),
                 List.copyOf(t.getTags()),
                 t.isPinned(),
                 hasActivePipeline,

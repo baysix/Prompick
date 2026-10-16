@@ -69,6 +69,20 @@ export interface TemplateDetail {
     checklist?: string[];
     resultNote?: string;
   };
+  /**
+   * 직접 만드는 법.
+   *
+   * 적어둔 템플릿에만 값이 온다. 영상은 만드는 길이 저마다 달라서 템플릿마다 따로 적는다.
+   * 비어 있으면 화면에 탭을 만들지 않는다.
+   */
+  selfGuide: {
+    toolName?: string;
+    toolUrl?: string;
+    intro?: string;
+    steps?: string[];
+    tips?: string[];
+    costNote?: string;
+  } | null;
   inputFields: {
     fieldKey: string;
     fieldType: "IMAGE" | "SELECT" | "TEXT";

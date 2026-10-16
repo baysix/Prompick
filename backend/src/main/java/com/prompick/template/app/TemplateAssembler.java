@@ -123,6 +123,7 @@ public class TemplateAssembler {
                 t.getEstimatedSeconds(),
                 t.getRequiredPhotoSummary(),
                 t.getUploadGuide(),
+                t.getSelfGuide(),
                 t.getInputFields().stream().map(this::toInputField).toList(),
                 t.getPromptAccess(),
                 t.getPromptCost(),

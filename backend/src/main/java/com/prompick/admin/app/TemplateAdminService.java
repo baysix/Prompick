@@ -160,6 +160,8 @@ public class TemplateAdminService {
                 form.uploadGuide() == null ? Map.of() : form.uploadGuide(),
                 form.tags() == null ? new LinkedHashSet<>() : new LinkedHashSet<>(form.tags()),
                 form.pinned());
+
+        template.changeSelfGuide(form.selfGuide());
     }
 
     private Template find(Long id) {

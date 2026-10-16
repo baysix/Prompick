@@ -260,6 +260,20 @@ function BasicForm({
 }) {
   const isVideo = form.contentType === "VIDEO";
 
+  /**
+   * 직접 만들기 안내의 한 칸만 바꾼다.
+   *
+   * 칸이 여섯이라 매번 전체를 펼쳐 쓰면 한 칸을 빠뜨리기 쉽다. 전부 비면 null 로 되돌린다 -
+   * 빈 객체를 남기면 서버가 "안내가 있다"고 보고 빈 탭을 만든다.
+   */
+  const setSelf = (patch: Partial<NonNullable<TemplateFormValues["selfGuide"]>>) => {
+    const next = { ...(form.selfGuide ?? {}), ...patch };
+    const empty = Object.values(next).every((v) =>
+      v == null ? true : typeof v === "string" ? v.trim() === "" : v.length === 0,
+    );
+    set({ selfGuide: empty ? null : next });
+  };
+
   return (
     <div className="space-y-5">
       <Card
@@ -452,6 +466,80 @@ function BasicForm({
             />
           </Field>
 
+          {/*
+            직접 만드는 법.
+
+            영상은 만드는 길이 저마다 달라서 템플릿마다 따로 적는다. 비워두면 상세 화면에
+            탭이 생기지 않으므로, 쓸 말이 없는 템플릿은 그냥 두면 된다.
+
+            적은 글은 로그인하지 않은 사람에게도 보인다. 파이프라인의 실제 프롬프트를
+            옮겨 적으면 유료로 파는 것을 공짜로 내주는 셈이 되므로, 어떤 도구로 어떤
+            순서인지까지만 적는다.
+          */}
+          <div className="rounded-xl border border-line px-4 py-4">
+            <p className="text-[13px] font-semibold text-ink">직접 만들기 안내</p>
+            <p className="mt-1 text-[12px] leading-relaxed text-ink-faint">
+              적으면 상세 화면에 &ldquo;직접 만들기&rdquo; 탭이 생겨요. 비워두면 안 생겨요.
+              <strong className="text-paid"> 프롬프트 원문은 적지 마세요</strong> — 로그인
+              안 한 사람에게도 그대로 보여요.
+            </p>
+
+            <div className="mt-4 space-y-4">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Field label="도구 이름" hint="예: Higgsfield Genjutsu">
+                  <Input
+                    value={form.selfGuide?.toolName ?? ""}
+                    onChange={(e) => setSelf({ toolName: e.target.value })}
+                    placeholder="Higgsfield Genjutsu"
+                  />
+                </Field>
+                <Field label="도구 주소" hint="새 창으로 열리는 버튼이 생겨요">
+                  <Input
+                    value={form.selfGuide?.toolUrl ?? ""}
+                    onChange={(e) => setSelf({ toolUrl: e.target.value })}
+                    placeholder="https://higgsfield.ai/..."
+                  />
+                </Field>
+              </div>
+
+              <Field label="한 줄 설명" hint="무엇을 하는 것인지 먼저 알려주는 자리">
+                <Input
+                  value={form.selfGuide?.intro ?? ""}
+                  onChange={(e) => setSelf({ intro: e.target.value })}
+                  placeholder="바탕 영상의 움직임은 그대로 두고 얼굴만 바꾸는 방식이에요."
+                />
+              </Field>
+
+              <Field label="단계" hint="한 줄에 하나씩. 번호는 화면이 알아서 매겨요">
+                <Textarea
+                  value={(form.selfGuide?.steps ?? []).join("\n")}
+                  onChange={(e) => setSelf({ steps: toLines(e.target.value) })}
+                  rows={6}
+                  placeholder={
+                    "Genjutsu 탭에서 Motion Transfer 고르기\n4~30초짜리 영상 올리기\n얼굴 사진 올리기\n프리셋 고르고 만들기"
+                  }
+                />
+              </Field>
+
+              <Field label="요령" hint="한 줄에 하나씩. 선택이에요">
+                <Textarea
+                  value={(form.selfGuide?.tips ?? []).join("\n")}
+                  onChange={(e) => setSelf({ tips: toLines(e.target.value) })}
+                  rows={3}
+                  placeholder={"움직임은 프롬프트로 지시하지 마세요\n연습은 480p로 하세요"}
+                />
+              </Field>
+
+              <Field label="요금 안내" hint="노란 띠로 눈에 띄게 보여요">
+                <Input
+                  value={form.selfGuide?.costNote ?? ""}
+                  onChange={(e) => setSelf({ costNote: e.target.value })}
+                  placeholder="무료 요금제로는 영상을 만들 수 없어요. 구독이 필요해요."
+                />
+              </Field>
+            </div>
+          </div>
+
           <Field label="태그" hint="쉼표로 구분. 검색에 쓰여요">
             <Input
               value={form.tags.join(", ")}
@@ -477,4 +565,9 @@ function BasicForm({
       {error && <p className="text-[13px] text-paid">{error}</p>}
     </div>
   );
+}
+
+/** 여러 줄 입력을 줄 단위 배열로. 빈 줄은 버린다 */
+function toLines(value: string): string[] {
+  return value.split("\n").filter((line) => line.trim() !== "");
 }

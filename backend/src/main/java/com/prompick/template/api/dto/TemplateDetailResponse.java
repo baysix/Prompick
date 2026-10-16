@@ -31,6 +31,8 @@ public record TemplateDetailResponse(
         int estimatedSeconds,
         String requiredPhotoSummary,
         Map<String, Object> uploadGuide,
+        /** 직접 만드는 법. 적어둔 템플릿에만 값이 있다 */
+        Map<String, Object> selfGuide,
         List<InputFieldResponse> inputFields,
         PromptAccess promptAccess,
         int promptCost,
