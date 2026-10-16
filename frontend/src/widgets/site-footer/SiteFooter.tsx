@@ -35,6 +35,7 @@ const GROUPS = [
       { href: "/guide/photos", label: "사진 고르는 법" },
       { href: "/guide/results", label: "결과가 다른 이유" },
       { href: "/guide/prompts", label: "프롬프트 쓰는 법" },
+      { href: "/guide/higgsfield", label: "영상 직접 만들기" },
     ],
   },
   {

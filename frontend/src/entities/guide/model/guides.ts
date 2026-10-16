@@ -31,6 +31,13 @@ export const GUIDES: GuideMeta[] = [
     minutes: 4,
   },
   {
+    slug: "higgsfield",
+    title: "영상, Higgsfield에서 직접 만들어 보기",
+    summary:
+      "우리 영상 템플릿이 쓰는 그 기능을 직접 쓰는 법이에요. 구독부터 첫 영상까지, 처음 해보는 분 기준으로 적었어요.",
+    minutes: 7,
+  },
+  {
     slug: "prompts",
     title: "프롬프트를 받아 가서 쓰는 법",
     summary:
